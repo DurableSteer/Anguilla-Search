@@ -1,0 +1,26 @@
+{
+    "Net-Name": "7fdaa098",
+    "Subject": "cheese",
+    "TLD": "cheesy3",
+    "Num-Websites": 64,
+    "Num-Links": 1188,
+    "Query-Token": [
+        "burrata",
+        "slovakianbryndza",
+        "cantal"
+    ],
+    "Num-Websites-with-Query": 6,
+    "Query-URLs": [
+        "http://rich-mozzarella.cheesy3",
+        "http://nutty-lancashire.cheesy3",
+        "http://mozzarella-and-edam.cheesy3",
+        "http://asiago-and-brie.cheesy3",
+        "http://quark-and-slovakianbryndza.cheesy3",
+        "http://gouda-and-muenster.cheesy3"
+    ],
+    "Seed-URLs": [
+        "http://mozzarella-and-edam.cheesy3",
+        "http://asiago-and-brie.cheesy3",
+        "http://quark-and-slovakianbryndza.cheesy3"
+    ]
+}

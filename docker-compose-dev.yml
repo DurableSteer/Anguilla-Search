@@ -1,0 +1,88 @@
+services:
+
+  vscode-java-devcontainer:
+    image: registry.propra-prod1.fernuni-hagen.de/pub-access/propra-ws-24-25-docker-images/ubuntu-22_04-maven-openjdk-17-jdk:20240815.1
+    container_name: anguilla-search-vscode-java-devcontainer
+    hostname: anguilla-search-vscode-java-devcontainer
+    user: 1000:1000
+    working_dir: /home/vscode/workspace
+    volumes:
+       # maven repository for caching
+       - type: volume
+         source: m2
+         target: /home/vscode/.m2
+       # vscodium-server
+       - type: volume
+         source: vscodium-server
+         target: /home/vscode/.vscodium-server
+       # vscode-server
+       - type: volume
+         source: vscode-server
+         target: /home/vscode/.vscode-server
+      # coder-server config
+       - type: volume
+         source: code-server-config
+         target: /home/vscode/.config/code-server
+      # coder-server data
+       - type: volume
+         source: code-server-data
+         target: /home/vscode/.local/share/code-server
+       # mount the workspace directory
+       - type: bind
+         source: ./
+         target: /home/vscode/workspace
+    ports:
+      - "30022:22"
+      - "8080:8080"
+    tty: true
+    environment:
+      - SSH_SERVER=${SSH_SERVER:-false}
+      - CODER_SERVER=${CODER_SERVER:-true}
+      - FIXUID=${FIXUID:-false}
+      - CODER_EXTENSIONS=
+          hookyqr.beautify,
+          danielroedl.meld-diff,
+          vscjava.vscode-java-pack,
+          redhat.fabric8-analytics,
+          redhat.java,
+          sonarsource.sonarlint-vscode,
+          mhutchie.git-graph,
+          yzhang.markdown-all-in-one,
+          davidanson.vscode-markdownlint,
+          bierner.markdown-preview-github-styles,
+          jebbs.plantuml,
+          dracula-theme.theme-dracula
+      - CODER_SERVER_CONFIGS=
+          --auth none
+          --disable-telemetry
+          --disable-update-check
+          --app-name 'Anguilla Search'
+          --welcome-text 'Welcome to Anguilla Search'
+          --bind-addr 0.0.0.0:8080
+          /home/vscode/workspace
+    networks:
+      anguilla-search-dev:
+        ipv4_address: 172.32.0.5
+    dns:
+       - 172.32.0.2
+       - 8.8.8.8
+       - 4.4.4.4
+
+
+## -- Docker volumes
+volumes:
+  m2:
+  vscodium-server:
+  vscode-server:
+  code-server-config:
+  code-server-data:
+
+
+## -- Docker networks 
+networks:
+  anguilla-search-dev:
+    name: anguilla-search-dev
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/16

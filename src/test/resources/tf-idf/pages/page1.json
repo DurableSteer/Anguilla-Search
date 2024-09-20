@@ -1,0 +1,8 @@
+{
+    "url": "https://www.p1.local",
+    "title": "House",
+    "headings": "House Garden Pool Swim",
+    "paragraphs": "House Garden Garden",
+    "incomingLinks": [],
+    "outgoingLinks": ["https://www.p1.local", "https://www.p2.local"]
+} 

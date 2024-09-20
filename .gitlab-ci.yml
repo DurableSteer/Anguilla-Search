@@ -1,0 +1,101 @@
+image: maven:3.6.3-openjdk-17
+
+variables:
+  JAR_FILE: "anguillasearch-${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}.jar"
+  GENERIC_PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/anguilla-search/${CI_COMMIT_TAG}"
+  MAVEN_OPTS: >-
+    -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository
+    -Djava.awt.headless=true
+    -Drevision=$CI_COMMIT_REF_SLUG
+    -Dsha1=-$CI_COMMIT_SHORT_SHA 
+    -Dchangelist= 
+  MAVEN_CLI_OPTS: >-
+    --batch-mode
+    --errors
+    --fail-at-end
+    --show-version
+    --no-transfer-progress
+
+
+cache:
+  key: maven-cache
+  paths:
+    - .m2/repository
+    # Bad practice, but target succeeds the artifact size limit
+    - target
+
+
+stages:
+  - build
+  - html-report
+  - docker-image
+  - jar-upload
+  - release
+
+
+build:
+  stage: build
+  script:
+    - mvn $MAVEN_CLI_OPTS -Dmaven.test.skip clean package
+  tags:
+    - progpra4
+
+
+pages:
+  stage: html-report
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: thedockerhost
+  variables:
+    DOCKER_HOST: tcp://thedockerhost:2375/
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker compose -f docker-compose-intranet.yml up -d
+    - docker run --rm --net anguilla-search-dev --ip 172.32.0.8 --dns="172.32.0.2" --dns="8.8.8.8" --dns="4.4.4.4" -e MAVEN_OPTS="${MAVEN_OPTS}" --volume "$(pwd):$(pwd)" --workdir $(pwd) maven:3.6.3-openjdk-17 mvn ${MAVEN_CLI_OPTS} site
+    - mv target/site public
+    - docker compose -f docker-compose-intranet.yml down  
+  artifacts:
+    paths:
+    - public
+  tags:
+    - progpra4
+
+
+docker-image:
+  stage: docker-image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context "${CI_PROJECT_DIR}" --build-arg "JAR_FILE=target/${JAR_FILE}" --build-arg "LIBS_DIR=target/libs" --dockerfile "${CI_PROJECT_DIR}/Dockerfile" --destination "${CI_REGISTRY_IMAGE}/anguilla-search:${CI_COMMIT_BRANCH}" --destination "${CI_REGISTRY_IMAGE}/anguilla-search:latest"  
+  only:
+    - main
+  tags:
+    - progpra4
+
+
+jar-upload:
+  stage: jar-upload
+  image: curlimages/curl:latest
+  script:
+    - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file target/${JAR_FILE} ${GENERIC_PACKAGE_REGISTRY_URL}/${JAR_FILE}'
+  rules:
+    - if: $CI_COMMIT_TAG
+  tags:
+    - progpra4
+
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - 'release-cli create --name "Release ${CI_COMMIT_TAG}" --tag-name ${CI_COMMIT_TAG} --description "${CI_COMMIT_TAG_MESSAGE}" --assets-link "{\"name\":\"${JAR_FILE}\", \"url\":\"${GENERIC_PACKAGE_REGISTRY_URL}/${JAR_FILE}\"}"'
+  rules:
+    - if: $CI_COMMIT_TAG
+  tags:
+    - progpra4

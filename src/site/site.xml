@@ -1,0 +1,45 @@
+<project name="Anguilla Search">
+
+  <body>
+    <menu ref="reports" />
+  </body>
+
+  <skin>
+    <groupId>io.github.olamy.maven.skins</groupId>
+    <artifactId>reflow-maven-skin</artifactId>
+    <version>2.0.0</version>
+  </skin>
+
+  <custom>
+    <reflowSkin>
+        
+      <theme>bootswatch-spacelab</theme>
+      <highlightJs>true</highlightJs>
+      
+      <brand>
+        <name>Anguilla Search</name>
+        <href>project-info.html</href>
+      </brand>
+      
+      <tocTopFlatten>true</tocTopFlatten>
+      <toc>top</toc>
+      
+      <pages>
+        <index>
+          <shortTitle>Home</shortTitle>
+          <breadcrumbs>false</breadcrumbs>
+          <toc>false</toc>
+        </index>
+          
+        <project-reports>
+          <shortTitle>Reports</shortTitle>
+          <breadcrumbs>false</breadcrumbs>
+          <toc>false</toc>
+        </project-reports>
+      </pages>
+      
+      
+    </reflowSkin>
+  </custom>
+   
+</project>

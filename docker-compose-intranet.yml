@@ -1,0 +1,27 @@
+services:
+
+  dns-server:
+    image: registry.propra-prod1.fernuni-hagen.de/pub-access/propra-ws-24-25-docker-images/intra-bind9:latest
+    container_name: dns-server
+    command: ["named", "-g", "-c", "/etc/bind/named.conf"]
+    networks:
+      anguilla-search-dev:
+        ipv4_address: 172.32.0.2
+
+  web-server:
+    image: registry.propra-prod1.fernuni-hagen.de/pub-access/propra-ws-24-25-docker-images/intra-nginx:latest
+    container_name: web-server
+    networks:
+      anguilla-search-dev:
+        ipv4_address: 172.32.0.3
+
+
+## -- Docker networks 
+networks:
+  anguilla-search-dev:
+    name: anguilla-search-dev
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/16
+

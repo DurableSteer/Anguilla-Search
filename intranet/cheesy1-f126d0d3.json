@@ -1,0 +1,21 @@
+{
+    "Net-Name": "f126d0d3",
+    "Subject": "cheese",
+    "TLD": "cheesy1",
+    "Num-Websites": 64,
+    "Num-Links": 817,
+    "Query-Token": [
+        "ricotta"
+    ],
+    "Num-Websites-with-Query": 3,
+    "Query-URLs": [
+        "http://edam-and-derby.cheesy1",
+        "http://kesongputi24.cheesy1",
+        "http://buttery-camembert.cheesy1"
+    ],
+    "Seed-URLs": [
+        "http://creamy-liederkranz24.cheesy1",
+        "http://buttery-redleicester.cheesy1",
+        "http://rich-jarlsberg.cheesy1"
+    ]
+}

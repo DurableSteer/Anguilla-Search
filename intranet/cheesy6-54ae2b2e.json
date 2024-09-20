@@ -1,0 +1,17 @@
+{
+    "Net-Name": "54ae2b2e",
+    "Subject": "cheese",
+    "TLD": "cheesy6",
+    "Num-Websites": 4,
+    "Num-Links": 4,
+    "Query-Token": [
+        "swiss"
+    ],
+    "Num-Websites-with-Query": 1,
+    "Query-URLs": [
+        "http://brie24.cheesy6"
+    ],
+    "Seed-URLs": [
+        "http://cheddar24.cheesy6"
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "url": "https://www.p2.local",
+    "title": "Swim",
+    "headings": "Swim Pool",
+    "paragraphs": "Swim Pool",
+    "incomingLinks": ["https://www.p0.local", "https://www.p1.local", "https://www.p3.local"],
+    "outgoingLinks": ["https://www.p3.local"]
+}  

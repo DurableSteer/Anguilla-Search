@@ -1,0 +1,23 @@
+{
+    "pool": {
+        "https://www.p0.local" : 0.0,
+        "https://www.p1.local" : 0.0,
+        "https://www.p2.local" : 0.0,
+        "https://www.p3.local" : 0.0
+    },
+    "garden": {
+        "https://www.p0.local" : 0.08219487784336595,
+        "https://www.p1.local" : 0.10788077716941782,
+        "https://www.p3.local" : 0.07192051811294521
+    },
+    "house": {
+        "https://www.p0.local" : 0.164389755686731,
+        "https://www.p1.local" : 0.10788077716941782,
+        "https://www.p3.local" : 0.07192051811294521
+    },
+    "swim": {
+        "https://www.p1.local" : 0.035960259056472606,
+        "https://www.p2.local" : 0.1726092434710685,
+        "https://www.p3.local" : 0.07192051811294521
+    }
+} 
