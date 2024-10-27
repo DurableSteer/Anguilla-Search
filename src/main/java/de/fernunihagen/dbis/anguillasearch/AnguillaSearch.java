@@ -3,11 +3,15 @@ package de.fernunihagen.dbis.anguillasearch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+
 /**
  * Main class of the AnguillaSearch project.
  */
 public final class AnguillaSearch {
-
+    // colors for better log visibility
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_RED = "\u001B[31m";
     private static final Logger LOGGER = LoggerFactory.getLogger(AnguillaSearch.class);
     
     private AnguillaSearch() {
@@ -22,6 +26,16 @@ public final class AnguillaSearch {
 
         // Print start message to logger
         LOGGER.info("Starting AnguillaSearch...");
+
+        Crawler crawler = new Crawler();
+        String[] seed = {"https://en.wikipedia.org/wiki/South_West_England"};
+        try{
+            crawler.setSeed(seed);
+            crawler.crawl();
+        }catch(Exception e){
+            LOGGER.error(ANSI_RED+e.getMessage()+ANSI_RESET);
+        }
+        
 
         /*
          * Set the java.awt.headless property to true to prevent awt from opening windows.

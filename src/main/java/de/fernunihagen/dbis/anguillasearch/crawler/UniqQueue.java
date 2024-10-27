@@ -1,28 +1,75 @@
 package de.fernunihagen.dbis.anguillasearch.crawler;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
-//Prototype !!! 
-// Document me!
+import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
+
 // TestMe!
 
+/**
+ * An efficient implementation of a unique FIFO queue that only accepts elements
+ * which haven't been queued before.
+ * An AVL tree is used to store added values for douplicate checking so queue()
+ * works in O(log(n)).
+ * The actual queue is a linked list hence all other operations are O(1).
+ * 
+ * @author Nico Beyer
+ */
 public class UniqQueue {
-    private ArrayList<String> prevQueuedUrls;
-    private ArrayList<String> urls;
-    
-    public UniqQueue(){
-        prevQueuedUrls = new ArrayList<>();
-        urls = new ArrayList<>();
+
+    private AVLTree<String> prevQueuedUrls;
+    private LinkedList<String> urls;
+
+    /**
+     * Instantiate a new empty UniqQueue.
+     */
+    public UniqQueue() {
+        prevQueuedUrls = new AVLTree<>();
+        urls = new LinkedList<>();
     }
 
-    public void queue(String url){
-        if(prevQueuedUrls.contains(url)) return;
-        prevQueuedUrls.add(url);
-        urls.add(url);
+    /**
+     * Add a URL to the back of the queue.
+     * 
+     * @param url The URL to be added.
+     */
+    public void queue(String url) {
+        if (prevQueuedUrls.contains(url))
+            return;
+        prevQueuedUrls.insert(url);
+        urls.addFirst(url);
     }
 
-    public String pop(){
-        return urls.isEmpty() ? "" : urls.get(urls.size());
+    /**
+     * Remove the next(FIFO) URL from the queue and return it.
+     * 
+     * @return The next URL.
+     * @throws NoSuchElementException If pop() is called on an empty queue.
+     */
+    public String pop() throws NoSuchElementException {
+        if (urls.isEmpty())
+            throw new NoSuchElementException("UniqQueue: Tried to pop a URL off an empty queue.");
+        String url = urls.getLast();
+        urls.removeLast();
+        return url;
     }
 
+    /**
+     * Finds the number of currently queued elements.
+     * 
+     * @return The number of currently queued URLs.
+     */
+    public int size() {
+        return urls.size();
+    }
+
+    /**
+     * Checks if there are currently queued URLs.
+     * 
+     * @return True if the queue is empty. False otherwise.
+     */
+    public boolean isEmpty() {
+        return urls.isEmpty();
+    }
 }

@@ -1,4 +1,5 @@
 package de.fernunihagen.dbis.anguillasearch;
+
 import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.Gson;

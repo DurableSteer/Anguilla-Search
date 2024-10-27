@@ -209,13 +209,14 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Insert a value into the tree.
+     * * Insert a value into the tree.
      * 
      * @param value The value to be inserted.
+     * @throws NullPointerException If null is passed as an argument!
      */
-    public void insert(T value) {
+    public void insert(T value) throws NullPointerException {
         if (value == null)
-            return;
+            throw new NullPointerException("AVLTree: Tried to insert null!");
         this.root = insert(this.root, value);
     }
 
@@ -327,13 +328,14 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Delete a value from the tree.
+     * * Delete a value from the tree.
      * 
      * @param value The value to be deleted.
+     * @throws NullPointerException If a null value is passed as an argument.
      */
-    public void delete(T value) {
+    public void delete(T value) throws NullPointerException {
         if (value == null)
-            return;
+            throw new NullPointerException("AVLTree: Tried to remove null!");
         this.root = delete(this.root, value);
 
         // Assumes the value is found and successfully deleted.
@@ -344,10 +346,13 @@ public class AVLTree<T extends Comparable<T>> {
      * Checks if a value is contained in the tree.
      * 
      * @param value The value to be checked for.
+     * @throws NullPointerException If null is passed as an argument!
      * @return True if the value is contained in the tree.
      *         False if not.
      */
-    public boolean contains(T value) {
+    public boolean contains(T value) throws NullPointerException {
+        if (value == null)
+            throw new NullPointerException("AVLTree: Tried to check if null is contained!");
         return retrieve(value) != null;
     }
 
@@ -385,14 +390,17 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Find a Value in the tree and return it.
+     * * Find a Value in the tree and return it.
      * Will return null if the value is not found.
      * 
      * @param value The value to be searched for.
+     * @throws NullPointerException If null is passed as the value to retrieve!
      * @return The value of the node found or null.
      */
-    public T retrieve(T value) {
-        if (this.root == null || value == null)
+    public T retrieve(T value) throws NullPointerException {
+        if (value == null)
+            throw new NullPointerException("AVLTree: Tried to retrieve null!");
+        if (this.root == null)
             return null;
         return retrieve(this.root, value);
     }
@@ -435,10 +443,11 @@ public class AVLTree<T extends Comparable<T>> {
      * an action on each visited nodes value.
      * 
      * @param action The listener object implementing the AVLTree.Action interface.
+     * @throws NullPointerException If null is passed as the action object.
      */
-    public void inOrder(Action<T> action) {
+    public void inOrder(Action<T> action) throws NullPointerException {
         if (action == null)
-            return;
+            throw new NullPointerException("AVLTree: Tried to inOrder with null as an action!");
         inOrder(this.root, action);
     }
 
