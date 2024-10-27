@@ -1,7 +1,5 @@
 package de.fernunihagen.dbis.anguillasearch;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 
 /**
@@ -9,7 +7,17 @@ import org.junit.jupiter.api.Test;
  */
 class DevTests {
     @Test
-    void shouldAnswerWithTrue() {
-        assertTrue(true);
+    void runUnitTests() {
+        // Test the AVLTree.
+        AVLTreeTests avlTreeTests = new AVLTreeTests();
+        avlTreeTests.testInsert();
+        avlTreeTests.testHeight();
+        avlTreeTests.TestFindingValues();
+        avlTreeTests.testDelete();
+
+        UniqQueueTests uniqQueueTests = new UniqQueueTests();
+        uniqQueueTests.testQueue();
+        uniqQueueTests.testQueueDouplicates();
+        uniqQueueTests.testPop();
     }
 }
