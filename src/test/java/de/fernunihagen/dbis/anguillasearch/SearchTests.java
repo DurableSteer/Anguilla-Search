@@ -1,13 +1,19 @@
 package de.fernunihagen.dbis.anguillasearch;
+
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
+import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
+
 /**
  * Unit tests for the search.
  */
@@ -23,16 +29,31 @@ class SearchTests {
         // Extract the expected URLs from the JSON file
         String[] expectedURLs = new Gson().fromJson(testJSON.get("Query-URLs"), String[].class);
         // Execute a search with the given query in the given network via the seed URLs
-        List<String> foundURLs; 
+        LinkedList<String> foundURLs = new LinkedList<>() {
+
+        };
+        List<String[]> foundEntries;
 
         // Place your code here to execute the search
-        // foundURLs = search(query, seedUrls);
+        Crawler crawler = new Crawler();
+        crawler.setSeed(seedUrls);
+        try {
+            crawler.crawl();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        VectorIndex reverseIndex = crawler.getVectorIndex();
+        String queryString = "";
+        for (String s : query)
+            queryString += s;
+        foundEntries = reverseIndex.searchQueryTfIdf(queryString);
+        for (String[] entry : foundEntries) {
+            foundURLs.add(entry[0]);
+        }
 
-        // Verify that the found URLs are correct, i.e. the same as stated in the JSON file
+        // Verify that the found URLs are correct, i.e. the same as stated in the JSON
+        // file
         // Uncomment the following line once you have implemented the search
-        //assertTrue(foundURLs.containsAll(Arrays.asList(expectedURLs)));
-
-        // Remove the following line after adding your code!
-        assertTrue(false);
+        assertTrue(foundURLs.containsAll(Arrays.asList(expectedURLs)));
     }
 }

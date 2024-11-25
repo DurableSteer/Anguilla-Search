@@ -8,21 +8,22 @@ import java.util.List;
 public class Site {
     public final String url;
     public final String title;
-    public final List<String> headers;
-    public final String body;
+    public final List<String> headings;
+    public final String paragraphs;
 
     /**
      * Instantiate a new website container.
      * 
-     * @param url     The URL of the website.
-     * @param title   The title of the website.
-     * @param headers The Headers found on the website.
-     * @param body    All text in the body of the website.
+     * @param url        The URL of the website.
+     * @param title      The title of the website.
+     * @param headings   The Headers found on the website.
+     * @param paragraphs All text in the body of the website.
      */
-    public Site(String url, String title, List<String> headers, String body) {
+    public Site(String url, String title, List<String> headings, String paragraphs) {
         this.url = url;
         this.title = title;
-        this.headers = headers;
-        this.body = body;
+        this.headings = headings;
+        this.paragraphs = paragraphs;
+
     }
 }

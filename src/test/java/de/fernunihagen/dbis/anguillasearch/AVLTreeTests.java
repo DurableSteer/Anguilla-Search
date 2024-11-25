@@ -11,7 +11,7 @@ import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 
 import java.util.List;
 
-public class AVLTreeTests {
+class AVLTreeTests {
 
     @BeforeAll
     static void setUp() {
@@ -157,6 +157,6 @@ public class AVLTreeTests {
 
         // All elements were deleted so the tree should now be empty.
         assertEquals(true, tree.isEmpty());
-
     }
+
 }

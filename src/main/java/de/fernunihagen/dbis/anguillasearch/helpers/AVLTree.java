@@ -417,7 +417,7 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Traverse the tree in order a listener object may be added to perform an
+     * Traverse the tree in order. A listener object may be added to perform an
      * action on each visited nodes value.
      * 
      * @param root   The root of the current subtree.
@@ -426,8 +426,6 @@ public class AVLTree<T extends Comparable<T>> {
     private void inOrder(Node root, Action<T> action) {
         if (root == null)
             return;
-        // Perform listener action on the nodes value.
-        action.act(root.value);
 
         Node left = root.left;
         Node right = root.right;
@@ -436,10 +434,38 @@ public class AVLTree<T extends Comparable<T>> {
             inOrder(left, action);
         if (right != null)
             inOrder(right, action);
+
+        // Perform listener action on the nodes value.
+        action.act(root.value);
     }
 
     /**
-     * Traverse the tree in order a listener object of the may be added to perform
+     * Traverse the tree in preorder. A listener object may be added to perform an
+     * action on each visited nodes value.
+     * 
+     * @param root   The root of the current subtree.
+     * @param action The listener object.
+     */
+    private void preOrder(Node root, Action<T> action) {
+        if (root == null)
+            return;
+
+        Node left = root.left;
+        Node right = root.right;
+
+        // Perform listener action on the nodes value.
+        action.act(root.value);
+
+        if (left != null)
+            preOrder(left, action);
+
+        if (right != null)
+            preOrder(right, action);
+
+    }
+
+    /**
+     * Traverse the tree in order. A listener object may be added to perform
      * an action on each visited nodes value.
      * 
      * @param action The listener object implementing the AVLTree.Action interface.
@@ -449,6 +475,19 @@ public class AVLTree<T extends Comparable<T>> {
         if (action == null)
             throw new NullPointerException("AVLTree: Tried to inOrder with null as an action!");
         inOrder(this.root, action);
+    }
+
+    /**
+     * Traverse the tree in preorder. A listener object may be added to perform
+     * an action on each visited nodes value.
+     * 
+     * @param action The listener object implementing the AVLTree.Action interface.
+     * @throws NullPointerException If null is passed as the action object.
+     */
+    public void preOrder(Action<T> action) throws NullPointerException {
+        if (action == null)
+            throw new NullPointerException("AVLTree: Tried to inOrder with null as an action!");
+        preOrder(this.root, action);
     }
 
     /**
@@ -466,6 +505,23 @@ public class AVLTree<T extends Comparable<T>> {
         }
         inOrder(root, new PrintValue());
         return inOrder;
+    }
+
+    public List<T> getValuesLevelOrder() {
+        LinkedList<T> values = new LinkedList<>();
+        LinkedList<Node> queue = new LinkedList<>();
+        Node cur = this.root;
+        queue.addLast(cur);
+        while (!queue.isEmpty()) {
+            cur = queue.pop();
+
+            values.addFirst(cur.value);
+            if (cur.left != null)
+                queue.addLast(cur.left);
+            if (cur.right != null)
+                queue.addLast(cur.right);
+        }
+        return values;
     }
 
     /**

@@ -1,6 +1,8 @@
 package de.fernunihagen.dbis.anguillasearch.crawler;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.ConnectException;
@@ -16,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGraphModel;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxRectangle;
@@ -23,9 +26,10 @@ import com.mxgraph.view.mxGraph;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
+import de.fernunihagen.dbis.anguillasearch.helpers.VectorSite;
+import de.fernunihagen.dbis.anguillasearch.index.ReverseIndex;
+import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
-// Clean me!
-// Finish me!
 /**
  * The Crawler class represents the webcrawler.
  * It contains methods to access its current state and methods to load a seed
@@ -36,7 +40,7 @@ import de.fernunihagen.dbis.anguillasearch.helpers.Site;
 public class Crawler {
 
     private UniqQueue queue;
-    private LinkedList<Site> parsedSites;
+    private VectorIndex vectorIndex;
     private AVLTree<Node> networkMap;
     private mxGraph networkGraph;
     private int nrOfLinksFound;
@@ -73,6 +77,22 @@ public class Crawler {
         @Override
         public int compareTo(Node other) {
             return this.url.compareTo(other.url);
+        }
+
+        /**
+         * Just added for compliance with the Comparable contract.
+         */
+        @Override
+        public boolean equals(Object other) {
+            return this.url.equals(other);
+        }
+
+        /**
+         * Just added for compliance with the Comparable contract.
+         */
+        @Override
+        public int hashCode() {
+            return super.hashCode();
         }
     }
 
@@ -117,7 +137,7 @@ public class Crawler {
     private void reset() {
         nrOfLinksFound = 0;
         nrOfSitesCrawled = 0;
-        parsedSites = new LinkedList<>();
+        vectorIndex = new VectorIndex();
         mxGraphModel model = new mxGraphModel();
         networkGraph = new mxGraph(model);
         networkMap = new AVLTree<>();
@@ -125,7 +145,7 @@ public class Crawler {
 
     /**
      * Get title, headers and textcontent as well as all valid links from the given
-     * webpage. Store text to parsedSites and queue up the links.
+     * webpage. Store text to forwardIndex and vectorIndex and queue up the links.
      * 
      * @param url  URL of the webpage.
      * @param page The webpage to be parsed.
@@ -144,8 +164,8 @@ public class Crawler {
         // 3. get the text content
         String text = page.body().text();
 
-        // 4. format title/text into object and save to Structure
-        parsedSites.addLast(new Site(url, title, foundHeaders, text));
+        // 4. format title/text into object and save to forward and vectorized index.
+        vectorIndex.addSite(new Site(url, title, foundHeaders, text));
     }
 
     /**
@@ -182,7 +202,7 @@ public class Crawler {
         Object targetVertex = null;
         if (target == null) {
             // create new Vertex
-            targetVertex = networkGraph.insertVertex(parent, null, url, 0, 0, 240, 30);
+            targetVertex = networkGraph.insertVertex(parent, null, url, 0, 0, 260, 50);
             // add new Vertex to the map.
 
             networkMap.insert(new Node(url, targetVertex));
@@ -232,7 +252,11 @@ public class Crawler {
      * The seed needs to be set before calling this method!
      * Calling this method will delete all saved information of the last run.
      * 
-     * @param siteLimit The non zero based number of sites to be visited.
+     * @param siteLimit  The non zero based number of sites to be visited.
+     * @param map        If set true the crawler will add all found links and sites
+     *                   to the networkgraph.
+     * @param noIndexing If set to true the crawler will not save any visited
+     *                   pages(for testing).
      * @throws SeedNotSetException            Will be thrown if the seed is not set
      *                                        before calling crawl().
      * @throws java.net.MalformedURLException Will be thrown if a non http(s) link
@@ -242,7 +266,7 @@ public class Crawler {
      *                                        prevents the crawler from fetching a
      *                                        site.
      */
-    public void crawl(int siteLimit, boolean map) throws SeedNotSetException, java.io.IOException {
+    public void crawl(int siteLimit, boolean map, boolean noIndexing) throws SeedNotSetException, java.io.IOException {
         reset();
         if (siteLimit < 1)
             return; // nothing to do
@@ -264,6 +288,8 @@ public class Crawler {
 
                 if (map)
                     mapUrls(url, page);
+                else if (noIndexing)
+                    queueUrls(page);
                 else {
                     storeTextContent(url, page);
                     queueUrls(page);
@@ -299,7 +325,124 @@ public class Crawler {
      *                                        site.
      */
     public void crawl() throws SeedNotSetException, java.io.IOException {
-        crawl(1024, false);
+        crawl(1024, false, false);
+    }
+
+    /**
+     * Start the crawler until siteLimit pages have been visited and parsed. The
+     * parsed
+     * pages title, headers and textcontent will be saved to the index structure.
+     * The seed needs to be set before calling this method!
+     * 
+     * @param siteLimit The maximum number of pages to be visited.
+     * 
+     * @throws SeedNotSetException            Will be thrown if the seed is not set
+     *                                        before calling crawl().
+     * @throws java.net.MalformedURLException Will be thrown if a non http(s) link
+     *                                        is in the seed or queue. Likely the
+     *                                        seed.
+     * @throws java.io.IOException            Will be thrown if a general error
+     *                                        prevents the crawler from fetching a
+     *                                        site.
+     */
+    public void crawl(int siteLimit) throws SeedNotSetException, java.io.IOException {
+        crawl(siteLimit, false, false);
+    }
+
+    /**
+     * Start the crawler until 1024 pages have been visited and parsed. Parsed sites
+     * will not be saved nor indexed for efficient testing.
+     * The seed needs to be set before calling this method!
+     * 
+     * @throws SeedNotSetException            Will be thrown if the seed is not set
+     *                                        before calling crawl().
+     * @throws java.net.MalformedURLException Will be thrown if a non http(s) link
+     *                                        is in the seed or queue. Likely the
+     *                                        seed.
+     * @throws java.io.IOException            Will be thrown if a general error
+     *                                        prevents the crawler from fetching a
+     *                                        site.
+     */
+    public void crawlWithoutIndexing() throws SeedNotSetException, java.io.IOException {
+        crawl(1024, false, true);
+    }
+
+    /**
+     * Use the crawler to map out the first 16 pages of a network. If a search query
+     * is given the network will be searched and the found TFIDF-searchscores are
+     * added
+     * to each relevant node. The result is a graph saved in figures/${query} if a
+     * query is given.
+     * figures/net-graph.png otherwise.
+     * The seed needs to be set first before calling map().
+     * 
+     * @param query
+     * 
+     * @throws SeedNotSetException Will be thrown if the seed is not set before
+     *                             calling this method.
+     * @throws java.io.IOException Will be thrown in case of a general error in the
+     *                             crawl() method.
+     */
+    public void map(String query) throws SeedNotSetException, java.io.IOException {
+        // Get the search results.
+        String[] seed = new String[queue.size()];
+        int i = 0;
+        for (String url : queue.toList()) {
+            seed[i] = url;
+            i++;
+        }
+
+        setSeed(seed);
+        crawl();
+
+        // Get the map data.
+        setSeed(seed);
+        crawl(16, true, false);
+
+        networkGraph.getModel().beginUpdate();
+        String fileName = "net-graph.png";
+        if (query != null) {
+            ReverseIndex reverseIndex = new ReverseIndex();
+            List<String[]> queryResult = reverseIndex.searchQuery(query);
+
+            // Add the TFIDFScore to each node on the searchpath.
+            List<Node> nodes = networkMap.getValuesInorder();
+            for (String[] entry : queryResult) {
+                String url = entry[0];
+                String score = entry[1].substring(0, 4);
+                for (Node node : nodes) {
+                    mxCell vertex = (mxCell) node.vertex;
+                    if (vertex.getValue().equals(url))
+                        vertex.setValue(vertex.getValue() + "\n" + score);
+                }
+            }
+
+            fileName = query + ".png";
+        }
+
+        // Draw a directed graph of the mapped out network.
+        mxCircleLayout layout = new mxCircleLayout(networkGraph);
+
+        layout.execute(networkGraph.getDefaultParent());
+        networkGraph.getModel().endUpdate();
+
+        mxRectangle bounds = networkGraph.getGraphBounds();
+
+        BufferedImage graph = mxCellRenderer.createBufferedImage(networkGraph,
+                null, 1, Color.WHITE, true,
+                bounds);
+
+        Graphics2D g2d = graph.createGraphics();
+        g2d.setPaint(Color.RED);
+        g2d.setFont(new Font("Serif", Font.BOLD, 30));
+        g2d.drawString(fileName, 100, 100);
+        g2d.dispose();
+        File image = new File("figures/" + fileName);
+        ImageIO.write(graph, "png", image);
+    }
+
+    public VectorIndex getVectorIndex() {
+        return this.vectorIndex;
     }
 
     /**
@@ -313,33 +456,18 @@ public class Crawler {
      *                             crawl() method.
      */
     public void map() throws SeedNotSetException, java.io.IOException {
-        crawl(16, true);
-
-        // Draw a directed graph of the mapped out network.
-        mxCircleLayout layout = new mxCircleLayout(networkGraph);
-        networkGraph.getModel().beginUpdate();
-        layout.execute(networkGraph.getDefaultParent());
-        networkGraph.getModel().endUpdate();
-
-        mxRectangle bounds = networkGraph.getGraphBounds();
-
-        BufferedImage graph = mxCellRenderer.createBufferedImage(networkGraph,
-                null, 1, Color.WHITE, true,
-                bounds);
-
-        File image = new File("figures/net-graph.png");
-        ImageIO.write(graph, "png", image);
+        map(null);
     }
 
     /**
      * Get the text content of the parsed Websites. Calling crawl() or map() will
      * delete the
      * current list.
-     * 
+     *
      * @return
      */
-    public List<Site> getParsedWebsites() {
-        return parsedSites;
+    public List<VectorSite> getForwardIndex() {
+        return vectorIndex.getForwardIndex();
     }
 
     /**

@@ -1,11 +1,10 @@
 package de.fernunihagen.dbis.anguillasearch.crawler;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
-
-// TestMe!
 
 /**
  * An efficient implementation of a unique FIFO queue that only accepts elements
@@ -48,11 +47,7 @@ public class UniqQueue {
      * @throws NoSuchElementException If pop() is called on an empty queue.
      */
     public String pop() throws NoSuchElementException {
-        if (urls.isEmpty())
-            throw new NoSuchElementException("UniqQueue: Tried to pop a URL off an empty queue.");
-        String url = urls.getLast();
-        urls.removeLast();
-        return url;
+        return urls.removeLast();
     }
 
     /**
@@ -62,6 +57,15 @@ public class UniqQueue {
      */
     public int size() {
         return urls.size();
+    }
+
+    /**
+     * Get a List of all currently queued urls.
+     * 
+     * @return A List of all currently queued urls.
+     */
+    public List<String> toList() {
+        return this.urls;
     }
 
     /**

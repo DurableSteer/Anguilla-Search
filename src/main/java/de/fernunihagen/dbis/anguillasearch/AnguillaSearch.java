@@ -13,7 +13,7 @@ public final class AnguillaSearch {
     private static final String ANSI_RESET = "\u001B[0m";
     private static final String ANSI_RED = "\u001B[31m";
     private static final Logger LOGGER = LoggerFactory.getLogger(AnguillaSearch.class);
-    
+
     private AnguillaSearch() {
     }
 
@@ -28,18 +28,20 @@ public final class AnguillaSearch {
         LOGGER.info("Starting AnguillaSearch...");
 
         Crawler crawler = new Crawler();
-        String[] seed = {"https://en.wikipedia.org/wiki/South_West_England"};
-        try{
+        String[] seed = { "https://en.wikipedia.org/wiki/South_West_Englad" };
+        try {
             crawler.setSeed(seed);
-            crawler.crawl();
-        }catch(Exception e){
-            LOGGER.error(ANSI_RED+e.getMessage()+ANSI_RESET);
+            crawler.crawl(1);
+
+        } catch (Exception e) {
+            LOGGER.error(ANSI_RED + e.getMessage() + ANSI_RESET);
         }
-        
 
         /*
-         * Set the java.awt.headless property to true to prevent awt from opening windows.
-         * If the property is not set to true, the program will throw an exception when trying to 
+         * Set the java.awt.headless property to true to prevent awt from opening
+         * windows.
+         * If the property is not set to true, the program will throw an exception when
+         * trying to
          * generate the graph visualizations in a headless environment.
          */
         System.setProperty("java.awt.headless", "true");

@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
 /**
  * Unit tests for the crawler.
@@ -42,13 +43,13 @@ class CrawlerTests {
 
             // Add your code here to get the number of crawled pages
             Crawler crawler = new Crawler();
-
             try {
                 crawler.setSeed(seedUrls);
-                crawler.crawl();
+                crawler.crawlWithoutIndexing();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
+
             numPagesCrawled = crawler.getNrOfSitesCrawled();
 
             // Verify that the number of crawled pages is correct, i.e. the same as stated
@@ -71,7 +72,7 @@ class CrawlerTests {
             Crawler crawler = new Crawler();
             try {
                 crawler.setSeed(seedUrls);
-                crawler.crawl();
+                crawler.crawlWithoutIndexing();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -81,6 +82,27 @@ class CrawlerTests {
             // JSON file
             // "Num-Links": 314466, Was edited in the json due to the reported bug.
             assertEquals(testJSON.get("Num-Links").getAsInt(), numLinks);
+        }
+    }
+
+    @Test
+    void mapTests() {
+        // Iterate over all test JSON files
+        for (JsonObject testJSON : testJSONs) {
+            // Extract the seed URLs from the JSON file
+            String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
+            // Get the crawled pages
+
+            // Add your code here to get the number of crawled pages
+            Crawler crawler = new Crawler();
+
+            try {
+                crawler.setSeed(seedUrls);
+                crawler.map("flavor");
+                crawler.map();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 }
