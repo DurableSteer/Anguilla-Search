@@ -46,6 +46,7 @@ class SearchTests {
         String queryString = "";
         for (String s : query)
             queryString += s;
+
         foundEntries = reverseIndex.searchQueryTfIdf(queryString);
         for (String[] entry : foundEntries) {
             foundURLs.add(entry[0]);

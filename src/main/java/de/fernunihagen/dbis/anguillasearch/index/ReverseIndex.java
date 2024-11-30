@@ -19,6 +19,8 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
  * The class represents a reverse index which maps a set of Sites to an index of
  * Tokens for use with a pagerank algorithm. The tokens are free of stopwords,
  * lemmatized and contain their TFIDF score for each of the Sites parsed.
+ * 
+ * @author Nico Beyer
  */
 public class ReverseIndex {
 
@@ -100,6 +102,9 @@ public class ReverseIndex {
         parseSiteList(siteList);
     }
 
+    /**
+     * Initialize basic lists and settings for the tokenization and lemmatization.
+     */
     private void init() {
         this.specialCharacters = Arrays.asList(":", ",", ".", "!", "|", "&", "'", "[", "]", "?", "-", "–",
                 "_", "/", "\\", "{", "}", "@", "^", "(", ")", "<", ">", "\"");
@@ -124,7 +129,6 @@ public class ReverseIndex {
         pipeline = new StanfordCoreNLP(props);
     }
 
-    // TODO: CHange to parse VectorSite lists.
     /**
      * Parse a List of sites to create a new index.
      * A previously created index will be deleted upon calling this method!
