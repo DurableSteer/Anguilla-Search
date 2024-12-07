@@ -2,7 +2,6 @@ package de.fernunihagen.dbis.anguillasearch;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -13,7 +12,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
-import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
 /**
  * Unit tests for the crawler.
@@ -24,12 +22,12 @@ class CrawlerTests {
     @BeforeAll
     static void setUp() throws IOException {
         // Load the metadata from the JSON file
-        // testJSONs.add(Utils.parseJSONFile("intranet/cheesy1-f126d0d3.json"));
-        // testJSONs.add(Utils.parseJSONFile("intranet/cheesy2-c79b0581.json"));
-        // testJSONs.add(Utils.parseJSONFile("intranet/cheesy3-7fdaa098.json"));
+        testJSONs.add(Utils.parseJSONFile("intranet/cheesy1-f126d0d3.json"));
+        testJSONs.add(Utils.parseJSONFile("intranet/cheesy2-c79b0581.json"));
+        testJSONs.add(Utils.parseJSONFile("intranet/cheesy3-7fdaa098.json"));
         testJSONs.add(Utils.parseJSONFile("intranet/cheesy4-a31d2f0d.json"));
-        // testJSONs.add(Utils.parseJSONFile("intranet/cheesy5-d861877d.json"));
-        // testJSONs.add(Utils.parseJSONFile("intranet/cheesy6-54ae2b2e.json"));
+        testJSONs.add(Utils.parseJSONFile("intranet/cheesy5-d861877d.json"));
+        testJSONs.add(Utils.parseJSONFile("intranet/cheesy6-54ae2b2e.json"));
     }
 
     @Test
@@ -85,6 +83,9 @@ class CrawlerTests {
         }
     }
 
+    /**
+     * Generate the Graphs for the extra tasks.
+     */
     void mapTests() {
         // Iterate over all test JSON files
         for (JsonObject testJSON : testJSONs) {
@@ -97,8 +98,12 @@ class CrawlerTests {
 
             try {
                 crawler.setSeed(seedUrls);
-                crawler.map("flavor");
                 crawler.map();
+                crawler.setSeed(seedUrls);
+                crawler.mapQuery("flavor");
+                crawler.setSeed(seedUrls);
+                crawler.mapPageRank();
+
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }

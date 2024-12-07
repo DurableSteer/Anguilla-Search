@@ -27,13 +27,17 @@ import com.mxgraph.view.mxGraph;
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
 import de.fernunihagen.dbis.anguillasearch.helpers.VectorSite;
-import de.fernunihagen.dbis.anguillasearch.index.ReverseIndex;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
+import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 
 /**
  * The Crawler class represents the webcrawler.
  * It contains methods to access its current state and methods to load a seed
- * and start crawling.
+ * and start crawling. The found data may be saved to a VectorIndex and a
+ * PageRankIndex.The former can be used to Search for found websites with a
+ * search query while the latter contains each pages page rank.
+ * Furthermore the crawler can map out a portion of a given network and display
+ * the results in a simple graph.
  * 
  * @author Nico Beyer
  */
@@ -43,6 +47,7 @@ public class Crawler {
     private VectorIndex vectorIndex;
     private AVLTree<Node> networkMap;
     private mxGraph networkGraph;
+    private PageRankIndex pageRankIndex;
     private int nrOfLinksFound;
     private int nrOfSitesCrawled;
 
@@ -141,6 +146,7 @@ public class Crawler {
         mxGraphModel model = new mxGraphModel();
         networkGraph = new mxGraph(model);
         networkMap = new AVLTree<>();
+        pageRankIndex = new PageRankIndex();
     }
 
     /**
@@ -173,18 +179,22 @@ public class Crawler {
      * 
      * @param page The page to be searched.
      */
-    private void queueUrls(Document page) {
-        // get all links on the page
+    private void queueUrls(String source, Document page) {
+        // Get all links on the page.
         Elements links = page.select("a[href]");
 
+        LinkedList<String> linkList = new LinkedList<>();
         for (Element link : links) {
-            // check links for other types and absolutify
+            // Check links for other types and absolutify
             if (isValid(link.attr("href"))) {
-                // add valid link to the UniqQueue
-                queue.queue(link.absUrl("href"));
+                // Add valid link to the UniqQueue and linkList.
+                String url = link.absUrl("href");
+                queue.queue(url);
+                linkList.add(url);
                 nrOfLinksFound++;
             }
         }
+        pageRankIndex.addLinks(source, linkList);
     }
 
     /**
@@ -236,7 +246,8 @@ public class Crawler {
 
                 Object targetVertex = insertVertexIfNotAlreadyAdded(url, parent);
                 // connect parent -> target
-                networkGraph.insertEdge(parent, null, "", currentVertex, targetVertex);
+                networkGraph.insertEdge(parent, null, "", currentVertex, targetVertex,
+                        "align=left;");
 
                 queue.queue(url);
                 nrOfLinksFound++;
@@ -247,8 +258,10 @@ public class Crawler {
 
     /**
      * Start the crawler until siteLimit pages have been visited and parsed. The
-     * parsed pages url, title, headers and textcontent will be saved to the
-     * structure.
+     * parsed pages url, title, headers and textcontent will be saved to an
+     * IndexVector to
+     * perform search queries and a PageRankIndex containing each pages page rank
+     * will be created.
      * The seed needs to be set before calling this method!
      * Calling this method will delete all saved information of the last run.
      * 
@@ -289,10 +302,10 @@ public class Crawler {
                 if (map)
                     mapUrls(url, page);
                 else if (noIndexing)
-                    queueUrls(page);
+                    queueUrls(url, page);
                 else {
                     storeTextContent(url, page);
-                    queueUrls(page);
+                    queueUrls(url, page);
                 }
                 sitesVisited++;
 
@@ -312,7 +325,9 @@ public class Crawler {
 
     /**
      * Start the crawler until 1024 pages have been visited and parsed. The parsed
-     * pages title, headers and textcontent will be saved to the index structure.
+     * pages title, headers and textcontent will be saved to an IndexVector to
+     * perform search queries and a PageRankIndex containing each pages page rank
+     * will be created.
      * The seed needs to be set before calling this method!
      * 
      * @throws SeedNotSetException            Will be thrown if the seed is not set
@@ -370,20 +385,25 @@ public class Crawler {
     /**
      * Use the crawler to map out the first 16 pages of a network. If a search query
      * is given the network will be searched and the found TFIDF-searchscores are
-     * added
-     * to each relevant node. The result is a graph saved in figures/${query} if a
-     * query is given.
+     * added to each relevant node.
+     * If withPageRank is set true the page rank which each node hands down to their
+     * child nodes
+     * is going to be displayed at the edges.
+     * The result is a graph saved in figures/net-graph if no options are given,
+     * figures/${query} if a
+     * query is given or /figures/page-rank.png if withPageRank is true.
      * figures/net-graph.png otherwise.
      * The seed needs to be set first before calling map().
      * 
-     * @param query
-     * 
+     * @param query        The search query to be displayed.
+     * @param withPageRank If true the page rank handed down will be displayed at
+     *                     the graphs edges.
      * @throws SeedNotSetException Will be thrown if the seed is not set before
      *                             calling this method.
      * @throws java.io.IOException Will be thrown in case of a general error in the
      *                             crawl() method.
      */
-    public void map(String query) throws SeedNotSetException, java.io.IOException {
+    private void map(String query, boolean withPageRank) throws SeedNotSetException, java.io.IOException {
         // Get the search results.
         String[] seed = new String[queue.size()];
         int i = 0;
@@ -394,6 +414,9 @@ public class Crawler {
 
         setSeed(seed);
         crawl();
+        VectorIndex fullIndex = this.vectorIndex;
+        PageRankIndex fullPageRankIndex = this.pageRankIndex;
+        fullPageRankIndex.calcPageRanks();
 
         // Get the map data.
         setSeed(seed);
@@ -401,23 +424,37 @@ public class Crawler {
 
         networkGraph.getModel().beginUpdate();
         String fileName = "net-graph.png";
+
+        List<Node> nodes = networkMap.getValuesInorder();
         if (query != null) {
-            ReverseIndex reverseIndex = new ReverseIndex();
-            List<String[]> queryResult = reverseIndex.searchQuery(query);
+            List<String[]> queryResult = fullIndex.searchQueryTfIdf(query);
 
             // Add the TFIDFScore to each node on the searchpath.
-            List<Node> nodes = networkMap.getValuesInorder();
             for (String[] entry : queryResult) {
                 String url = entry[0];
-                String score = entry[1].substring(0, 4);
+
+                String score = String.format("%.6s", entry[1]);
                 for (Node node : nodes) {
                     mxCell vertex = (mxCell) node.vertex;
+
+                    // Add the TfIdf to the nodes value.
                     if (vertex.getValue().equals(url))
                         vertex.setValue(vertex.getValue() + "\n" + score);
                 }
             }
-
             fileName = query + ".png";
+        }
+        if (withPageRank) {
+            // Add the pageRank to each edge.
+            for (Node node : nodes) {
+                mxCell vertex = (mxCell) node.vertex;
+                int edgeCount = vertex.getEdgeCount();
+                for (int j = 0; j < edgeCount; j++)
+                    vertex.getEdgeAt(j)
+                            .setValue(String.format("%.6f", fullPageRankIndex.getPageRankOf(node.url) / edgeCount));
+            }
+
+            fileName = "page-rank.png";
         }
 
         // Draw a directed graph of the mapped out network.
@@ -441,8 +478,24 @@ public class Crawler {
         ImageIO.write(graph, "png", image);
     }
 
+    /**
+     * Get the VectorIndex object containing the results of a crawl.
+     * 
+     * @return The VectorIndex object.
+     */
     public VectorIndex getVectorIndex() {
         return this.vectorIndex;
+    }
+
+    /**
+     * Get the PageRankIndex object created during crawling.
+     * pageRankIndex.calcPageRanks() should be called before getting any page ranks
+     * from the object.
+     * 
+     * @return The PageRankIndex object.
+     */
+    public PageRankIndex getPageRankIndex() {
+        return this.pageRankIndex;
     }
 
     /**
@@ -456,7 +509,39 @@ public class Crawler {
      *                             crawl() method.
      */
     public void map() throws SeedNotSetException, java.io.IOException {
-        map(null);
+        map(null, false);
+    }
+
+    /**
+     * Use the crawler to map out the first 16 pages of a network and include the
+     * TfIdf search score for the given query in each node. The result is a graph
+     * saved in figures/${query}.png.
+     * The seed needs to be set first before calling mapQuery().
+     * 
+     * @param query The search query to be displayed.
+     * @throws SeedNotSetException Will be thrown if the seed is not set before
+     *                             calling this method.
+     * @throws java.io.IOException Will be thrown in case of a general error in the
+     *                             crawl() method.
+     */
+    public void mapQuery(String query) throws SeedNotSetException, java.io.IOException {
+        map(query, false);
+    }
+
+    /**
+     * Use the crawler to map out the first 16 pages of a network and include the
+     * page rank handed down to each nodes children written at their edges. The
+     * result is a graph
+     * saved in figures/page-rank.png.
+     * The seed needs to be set first before calling mapQuery().
+     * 
+     * @throws SeedNotSetException Will be thrown if the seed is not set before
+     *                             calling this method.
+     * @throws java.io.IOException Will be thrown in case of a general error in the
+     *                             crawl() method.
+     */
+    public void mapPageRank() throws SeedNotSetException, java.io.IOException {
+        map(null, true);
     }
 
     /**

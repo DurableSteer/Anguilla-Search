@@ -1,4 +1,5 @@
 package de.fernunihagen.dbis.anguillasearch;
+
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
+import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 
 /**
  * Unit tests for the page rank algorithm.
@@ -34,13 +38,20 @@ class PageRankTests {
         for (JsonObject testJSON : testJSONs) {
             // Extract the seed URLs from the JSON file
             String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
-            
- 
-            // Add your code here to calculate the page rank
 
+            // Add your code here to calculate the page rank
+            Crawler crawler = new Crawler();
+            crawler.setSeed(seedUrls);
+            try {
+                crawler.crawlWithoutIndexing();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            PageRankIndex pageRankIndex = crawler.getPageRankIndex();
+            pageRankIndex.calcPageRanks();
 
             // Add the crawler and page rank instances to the map
-            //pageRankForAllIntranets.add(pageRank);
+            pageRankForAllIntranets.add(pageRankIndex.getPageRankMap());
         }
     }
 
@@ -54,11 +65,8 @@ class PageRankTests {
             // Verify that the sum of the page ranks is close to 1
             assertTrue(Math.abs(pageRankSum - 1.0) < 0.001);
         }
-
-        // Remove the following line after adding your code!
-        assertTrue(false);
     }
-    
+
     @Test
     void seedPageRank() {
         for (JsonObject testJSON : testJSONs) {
@@ -66,54 +74,92 @@ class PageRankTests {
             String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
 
             int numPages = new Gson().fromJson(testJSON.get("Num-Websites"), Integer.class);
-            
 
-            // Add your code here to calculate the page rank
+            Crawler crawler = new Crawler();
+            crawler.setSeed(seedUrls);
+            try {
+                crawler.crawlWithoutIndexing();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            PageRankIndex pageRankIndex = crawler.getPageRankIndex();
+            pageRankIndex.calcPageRanks(10000000);
 
             // Get the page rank of the seed URLs
             for (String seedUrl : seedUrls) {
 
-                double seedPageRank;
+                double seedPageRank = pageRankIndex.getPageRankOf(seedUrl);
                 // Adjust the damping factor to match your implementation
                 double rankSource = (1.0 - 0.85) * (1.0 / numPages);
-                
-                //assertTrue(Math.abs(seedPageRank - rankSource) < 0.001);
 
-                // Remove the following line after adding your code!
-                assertTrue(false);
+                assertTrue(Math.abs(seedPageRank - rankSource) < 0.001);
             }
         }
     }
 
     @Test
-    void correctPageRankScores() throws IOException{
+    void correctPageRankScores() throws IOException {
         // Create a map with URLs and the correct page rank scores;
-        // These scores will be used to verify the correctness of the page rank algorithm
+        // These scores will be used to verify the correctness of the page rank
+        // algorithm
         Map<String, Double> correctPageRankScores = Map.of(
-            "http://cheddar24.cheesy6", 0.0375,
-            "http://brie24.cheesy6", 0.3326,
-            "http://crumbly-cheddar.cheesy6", 0.3097,
-            "http://nutty-cheddar24.cheesy6", 0.3202);
-        
+                "http://cheddar24.cheesy6", 0.0375,
+                "http://brie24.cheesy6", 0.3326,
+                "http://crumbly-cheddar.cheesy6", 0.3097,
+                "http://nutty-cheddar24.cheesy6", 0.3202);
+
         JsonObject testJSON = Utils.parseJSONFile("intranet/cheesy6-54ae2b2e.json");
         // Extract the seed URLs from the JSON file
         String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
-        
 
         // Add your code here to calculate the page rank
-
+        Crawler crawler = new Crawler();
+        crawler.setSeed(seedUrls);
+        try {
+            crawler.crawlWithoutIndexing();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        PageRankIndex pageRankIndex = crawler.getPageRankIndex();
+        pageRankIndex.calcPageRanks(10000000);
 
         // Verify that the page rank scores are correct
         for (Map.Entry<String, Double> entry : correctPageRankScores.entrySet()) {
             String url = entry.getKey();
             double correctPageRank = entry.getValue();
 
-            double pageRankScore;
+            double pageRankScore = pageRankIndex.getPageRankOf(url);
 
-            //assertTrue(Math.abs(pageRankScore - correctPageRank) < 0.001);
-
-            // Remove the following line after adding your code!
-            assertTrue(false);
+            assertTrue(Math.abs(pageRankScore - correctPageRank) < 0.001);
         }
+    }
+
+    /*
+     * The nodes seem to be in the following loop: http://brie24.cheesy6 ->
+     * http://nutty-cheddar24.cheesy6 -> http://crumbly-cheddar.cheesy6 ->
+     * http://brie24.cheesy6 ...
+     * Where -> denotes linksTo.
+     * If no dampening factor was applied the loop would go on for ever, but with
+     * the dampening factor of 0.85 the nodes konverge towards
+     * pageRank(http://brie24.cheesy6) = pageRank(http://nutty-cheddar24.cheesy6) =
+     * pageRank(http://crumbly-cheddar.cheesy6).
+     */
+    @Test
+    void analyseNetwork() throws IOException {
+
+        JsonObject testJSON = Utils.parseJSONFile("intranet/cheesy6-54ae2b2e.json");
+        // Extract the seed URLs from the JSON file
+        String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
+
+        // Add your code here to calculate the page rank
+        Crawler crawler = new Crawler();
+        crawler.setSeed(seedUrls);
+        try {
+            crawler.crawlWithoutIndexing();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        PageRankIndex pageRankIndex = crawler.getPageRankIndex();
+        pageRankIndex.calcPageRanks(1000, 0.85, true);
     }
 }

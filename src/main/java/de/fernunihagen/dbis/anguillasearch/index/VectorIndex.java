@@ -275,8 +275,8 @@ public class VectorIndex {
         // If invalid weights are given avoid divide by zero.
         if (sum == 0.0)
             sum = 1.0;
-        for (String key : ret.keySet())
-            ret.put(key, ret.get(key) / sum);
+        for (Entry<String, Double> entry : ret.entrySet())
+            ret.put(entry.getKey(), entry.getValue() / sum);
 
         return ret;
     }

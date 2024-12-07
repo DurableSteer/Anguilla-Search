@@ -16,6 +16,8 @@ import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 
 /**
+ * This class is now deprecated and has been replaced by the VectorIndex class.
+ * 
  * The class represents a reverse index which maps a set of Sites to an index of
  * Tokens for use with a pagerank algorithm. The tokens are free of stopwords,
  * lemmatized and contain their TFIDF score for each of the Sites parsed.

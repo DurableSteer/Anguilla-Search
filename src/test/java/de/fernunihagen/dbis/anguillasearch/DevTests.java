@@ -29,6 +29,25 @@ class DevTests {
 
             SearchTests searchTests = new SearchTests();
             searchTests.findCorrectURLs();
+
+            CrawlerTests crawlerTests = new CrawlerTests();
+            CrawlerTests.setUp();
+            crawlerTests.crawlAllWebsitesInProvidedNetwork();
+            crawlerTests.findCorrectNumberOfLinks();
+
+            CosineTests cosineTests = new CosineTests();
+            cosineTests.equalVectors();
+            cosineTests.orthogonalVectors();
+            cosineTests.randomVectors();
+            cosineTests.specificResults();
+
+            PageRankTests pageRankTests = new PageRankTests();
+            PageRankTests.setUp();
+            pageRankTests.seedPageRank();
+            pageRankTests.sumOfPageRank();
+            pageRankTests.analyseNetwork();
+            pageRankTests.correctPageRankScores();
+
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
