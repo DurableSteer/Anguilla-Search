@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
+import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
+
 /**
  * A PageRankIndex object calculates and contains the page rank scores to a list
  * of given links.
@@ -85,28 +87,17 @@ public class PageRankIndex {
     }
 
     /**
-     * Find and return the bigger of the two numbers.
-     * If a==b the a will be returned.
-     * 
-     * @param a The first number to be compared.
-     * @param b The second number to be compared.
-     * @return a if a >= b else b.
-     */
-    private double max(double a, double b) {
-        return a >= b ? a : b;
-    }
-
-    /**
      * Find the page rank for each of the added websites.
      * After calling this method no more links may be added to the index.
      * The algorithm will stop after timeout iterations to avoid an infinite loop if
      * the algorithm doesn't converge.
-     * A dampening factor may be set with 0 < dFactor < 1.
+     * A dampening factor may be set to use a ranksource of (1-dFactor) values
+     * for the dFactor may in the range of 0 < dFactor < 1.
      * 
      * For debug purposes each iterations results may be printed to the console.
      * 
      * @param timeout The max number of iterations the algorithm may do.
-     * @param dFactor The dampening factor to aid convergence.
+     * @param dFactor The dampening/ranksource factor to aid convergence.
      * @param verbose If set true each iterations results will be printed to the
      *                console.
      */
@@ -134,7 +125,7 @@ public class PageRankIndex {
                     page.nextPageRank = page.nextPageRank + dFactor * (linkedPage.pageRank / linkedPage.linksOut);
                 }
                 page.nextPageRank += (1 - dFactor) / this.pageCount;
-                maxDiff = max(maxDiff, Math.abs(page.nextPageRank - oldPageRank));
+                maxDiff = HelperFunctions.max(maxDiff, Math.abs(page.nextPageRank - oldPageRank));
                 if (verbose)
                     System.out.println(String.format("Node:%-40s", page.url) + "pageRank:" + page.pageRank);
             }
@@ -146,7 +137,7 @@ public class PageRankIndex {
 
     /**
      * Find the page rank for each of the added websites.
-     * Using a default dampening factor of 0.85.
+     * Using a default dampening factor of 0.85 thus a ranksource of 0.15.
      * After calling this method no more links may be added to the index.
      * The algorithm will stop after timeout iterations to avoid an infinite loop if
      * the algorithm doesn't converge.
@@ -159,7 +150,7 @@ public class PageRankIndex {
 
     /**
      * Find the page rank for each of the added websites.
-     * Using a default dampening factor of 0.85.
+     * Using a default dampening factor of 0.85 thus a ranksource of 0.15.
      * After calling this method no more links may be added to the index.
      * The algorithm will stop after 100.000 iterations to avoid an infinite loop if
      * the algorithm doesn't converge.

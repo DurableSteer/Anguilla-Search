@@ -13,9 +13,10 @@ import java.util.Map.Entry;
 import java.util.Arrays;
 import java.util.Collections;
 
+import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
 import de.fernunihagen.dbis.anguillasearch.helpers.Token;
-import de.fernunihagen.dbis.anguillasearch.helpers.VectorSite;
+import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -40,7 +41,7 @@ public class VectorIndex {
     private ArrayList<ArrayList<Double>> matrix = new ArrayList<>();
     private TreeMap<Integer, Integer> docsPerTokIndex = new TreeMap<>();
 
-    private List<VectorSite> forwardIndex = new LinkedList<>();
+    private ForwardIndex forwardIndex = null;
 
     private List<String> specialCharacters;
     private List<String> stopwords;
@@ -79,6 +80,14 @@ public class VectorIndex {
      * Initialize a new empty vectorIndex object.
      */
     public VectorIndex() {
+        init();
+    }
+
+    /**
+     * Initialize a new empty vectorIndex object.
+     */
+    public VectorIndex(ForwardIndex forwardIndex) {
+        this.forwardIndex = forwardIndex;
         init();
     }
 
@@ -145,7 +154,8 @@ public class VectorIndex {
             // The token has been found in one more document to count.
             docsPerTokIndex.put(foundIndex, docsPerTokIndex.getOrDefault(foundIndex, 0) + 1);
         }
-        this.forwardIndex.add(new VectorSite(site.url, docInfo.getDocVectorized()));
+        if (this.forwardIndex != null)
+            this.forwardIndex.addVector(site.url, docInfo.getDocVectorized());
         this.totalDocCount++;
     }
 
@@ -333,7 +343,9 @@ public class VectorIndex {
             else
                 cosineSimilarity = calcCosineSimilarity(queryVector, matrix.get(docIndex));
 
-            foundSites.add(new AbstractMap.SimpleEntry<>(cosineSimilarity, doc));
+            // Only add pages that share similiarity with the query.
+            if (cosineSimilarity != 0.0)
+                foundSites.add(new AbstractMap.SimpleEntry<>(cosineSimilarity, doc));
         }
 
         // Sort the results by cosine similarity.
@@ -362,6 +374,52 @@ public class VectorIndex {
         for (String word : query.split(" "))
             weights.put(word, 1.0);
         return searchQueryCosine(query, weights);
+    }
+
+    /**
+     * Find the sites of the index most relevant to the given search query.
+     * This method uses the cosine similarity between query and indexed sites as
+     * well as the page rank to
+     * determine relevance.
+     * 
+     * The Index needs to be finished first.
+     * Normalize() may be called to increase this methods efficiency.
+     * 
+     * @param query         The search query to be used.
+     * @param pageRankIndex The PageRankIndex to be used. This has to contain values
+     *                      for each website in the VectorIndex's network and
+     *                      calcPageRanks() needs to be called prior to calling this
+     *                      method.
+     * @return A List of String[2] sorted by TfIdf score in decending order.
+     *         String[0] containins a sites url
+     *         String[1] containins the sites calculated TfIdf score.
+     */
+    public List<String[]> searchQueryCosinePageRank(String query, PageRankIndex pageRankIndex) {
+        LinkedList<String[]> results = new LinkedList<>();
+        List<String[]> cosineResults = searchQueryCosine(query);
+        double maxSimilarity = Double.NEGATIVE_INFINITY;
+        double maxPageRank = Double.NEGATIVE_INFINITY;
+
+        // Find the maximum similarity and pageRank in the search results.
+        for (String[] entry : cosineResults) {
+            double similarityScore = Double.parseDouble(entry[1]);
+            double pageRank = pageRankIndex.getPageRankOf(entry[0]);
+            maxSimilarity = HelperFunctions.max(similarityScore, maxSimilarity);
+            maxPageRank = HelperFunctions.max(pageRank, maxPageRank);
+        }
+
+        // Calculate the combined score
+        for (String[] entry : cosineResults) {
+            double similarityScore = Double.parseDouble(entry[1]);
+            double pageRank = pageRankIndex.getPageRankOf(entry[0]);
+            results.addLast(new String[] { entry[0],
+                    Double.toString(similarityScore / maxSimilarity + pageRank / maxPageRank) });
+        }
+
+        // Sort the results by the new searchscore.
+        Collections.sort(results, (entry, other) -> other[1].compareTo(entry[1]));
+
+        return results;
     }
 
     /**
@@ -469,14 +527,5 @@ public class VectorIndex {
      */
     public boolean docHasToken(String token, String docId) {
         return getTfIdfOf(token, docId) != null;
-    }
-
-    /**
-     * Get the vectorized forward index for this index.
-     * 
-     * @return The vectorized forward index.
-     */
-    public List<VectorSite> getForwardIndex() {
-        return this.forwardIndex;
     }
 }

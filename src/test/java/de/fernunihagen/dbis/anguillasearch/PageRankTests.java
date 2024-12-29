@@ -40,14 +40,15 @@ class PageRankTests {
             String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
 
             // Add your code here to calculate the page rank
-            Crawler crawler = new Crawler();
+            PageRankIndex pageRankIndex = new PageRankIndex();
+            Crawler crawler = new Crawler(pageRankIndex);
             crawler.setSeed(seedUrls);
             try {
                 crawler.crawlWithoutIndexing();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-            PageRankIndex pageRankIndex = crawler.getPageRankIndex();
+
             pageRankIndex.calcPageRanks();
 
             // Add the crawler and page rank instances to the map
@@ -75,15 +76,15 @@ class PageRankTests {
 
             int numPages = new Gson().fromJson(testJSON.get("Num-Websites"), Integer.class);
 
-            Crawler crawler = new Crawler();
+            PageRankIndex pageRankIndex = new PageRankIndex();
+            Crawler crawler = new Crawler(pageRankIndex);
             crawler.setSeed(seedUrls);
             try {
                 crawler.crawlWithoutIndexing();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-            PageRankIndex pageRankIndex = crawler.getPageRankIndex();
-            pageRankIndex.calcPageRanks(10000000);
+            pageRankIndex.calcPageRanks();
 
             // Get the page rank of the seed URLs
             for (String seedUrl : seedUrls) {
@@ -113,15 +114,15 @@ class PageRankTests {
         String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
 
         // Add your code here to calculate the page rank
-        Crawler crawler = new Crawler();
+        PageRankIndex pageRankIndex = new PageRankIndex();
+        Crawler crawler = new Crawler(pageRankIndex);
         crawler.setSeed(seedUrls);
         try {
             crawler.crawlWithoutIndexing();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        PageRankIndex pageRankIndex = crawler.getPageRankIndex();
-        pageRankIndex.calcPageRanks(10000000);
+        pageRankIndex.calcPageRanks();
 
         // Verify that the page rank scores are correct
         for (Map.Entry<String, Double> entry : correctPageRankScores.entrySet()) {
@@ -152,14 +153,14 @@ class PageRankTests {
         String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
 
         // Add your code here to calculate the page rank
-        Crawler crawler = new Crawler();
+        PageRankIndex pageRankIndex = new PageRankIndex();
+        Crawler crawler = new Crawler(pageRankIndex);
         crawler.setSeed(seedUrls);
         try {
             crawler.crawlWithoutIndexing();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        PageRankIndex pageRankIndex = crawler.getPageRankIndex();
         pageRankIndex.calcPageRanks(1000, 0.85, true);
     }
 }

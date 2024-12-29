@@ -26,16 +26,20 @@ import com.mxgraph.view.mxGraph;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
-import de.fernunihagen.dbis.anguillasearch.helpers.VectorSite;
+import de.fernunihagen.dbis.anguillasearch.index.ForwardIndex;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 
 /**
  * The Crawler class represents the webcrawler.
  * It contains methods to access its current state and methods to load a seed
- * and start crawling. The found data may be saved to a VectorIndex and a
- * PageRankIndex.The former can be used to Search for found websites with a
- * search query while the latter contains each pages page rank.
+ * and start crawling.
+ * 
+ * The found data may be saved to a VectorIndex and a
+ * PageRankIndex if given.The former can be used to Search for found websites
+ * with a
+ * search query while the latter contains each pages page rank
+ * .
  * Furthermore the crawler can map out a portion of a given network and display
  * the results in a simple graph.
  * 
@@ -48,6 +52,7 @@ public class Crawler {
     private AVLTree<Node> networkMap;
     private mxGraph networkGraph;
     private PageRankIndex pageRankIndex;
+    private ForwardIndex forwardIndex;
     private int nrOfLinksFound;
     private int nrOfSitesCrawled;
 
@@ -102,11 +107,40 @@ public class Crawler {
     }
 
     /**
-     * Instantiate a new empty webcrawler.
+     * Instantiate a new empty webcrawler that will not save crawled websites.
      */
     public Crawler() {
         queue = new UniqQueue();
         reset();
+    }
+
+    /**
+     * Instantiate a new empty webcrawler that will save the crawled websites to the
+     * given page rank index.
+     */
+    public Crawler(PageRankIndex pageRankIndex) {
+        this();
+        this.pageRankIndex = pageRankIndex;
+    }
+
+    /**
+     * Instantiate a new empty webcrawler that will save the crawled websites to the
+     * given vector index.
+     */
+    public Crawler(VectorIndex reverseIndex) {
+        this();
+        this.vectorIndex = reverseIndex;
+    }
+
+    /**
+     * Instantiate a new empty webcrawler that will save the crawled websites to the
+     * given indices.
+     */
+    public Crawler(ForwardIndex forwardIndex, VectorIndex vectorIndex, PageRankIndex pageRankIndex) {
+        this();
+        this.forwardIndex = forwardIndex;
+        this.vectorIndex = vectorIndex;
+        this.pageRankIndex = pageRankIndex;
     }
 
     /**
@@ -142,11 +176,9 @@ public class Crawler {
     private void reset() {
         nrOfLinksFound = 0;
         nrOfSitesCrawled = 0;
-        vectorIndex = new VectorIndex();
         mxGraphModel model = new mxGraphModel();
         networkGraph = new mxGraph(model);
         networkMap = new AVLTree<>();
-        pageRankIndex = new PageRankIndex();
     }
 
     /**
@@ -171,7 +203,11 @@ public class Crawler {
         String text = page.body().text();
 
         // 4. format title/text into object and save to forward and vectorized index.
-        vectorIndex.addSite(new Site(url, title, foundHeaders, text));
+        if (forwardIndex != null)
+            forwardIndex.addSite(new Site(url, title, foundHeaders, text));
+        if (vectorIndex != null)
+            vectorIndex.addSite(new Site(url, title, foundHeaders, text));
+
     }
 
     /**
@@ -194,7 +230,8 @@ public class Crawler {
                 nrOfLinksFound++;
             }
         }
-        pageRankIndex.addLinks(source, linkList);
+        if (pageRankIndex != null)
+            pageRankIndex.addLinks(source, linkList);
     }
 
     /**
@@ -383,27 +420,77 @@ public class Crawler {
     }
 
     /**
+     * Apply the search scores of a list of search results to a list of Nodes adding
+     * them to the nodes value.
+     * 
+     * If withTop3 is true the top 3 search results nodes background color will be
+     * changed to a highlighting color.
+     * 
+     * @param entryList The list of search results in the format: [url,
+     *                  searchScore].
+     * @param nodes     The list of nodes to apply the searchscores/highlighting to.
+     * @param withTop3  If true the top 3 search results will be highlighted.
+     */
+    private void setNodeValuesOf(List<String[]> entryList, List<Node> nodes, boolean withTop3) {
+        // Get the top 3 search results.
+        LinkedList<String> top3 = new LinkedList<>();
+        for (int j = 0; j < 3; j++) {
+            top3.add(entryList.get(j)[0]);
+        }
+
+        // Add the TFIDFScore or combined cosine-pagerank to each node on the
+        // searchpath.
+        for (String[] entry : entryList) {
+            String url = entry[0];
+
+            String score = String.format("%.6s", entry[1]);
+            for (Node node : nodes) {
+                mxCell vertex = (mxCell) node.vertex;
+
+                // Add the TFIDFScore or combined cosine-pagerank to the nodes value.
+                if (vertex.getValue().equals(url)) {
+                    vertex.setValue(vertex.getValue() + "\n" + score);
+
+                    if (withTop3 && top3.contains(entry[0])) {
+                        vertex.setStyle("fillColor=#FFE9C3");
+                    }
+                }
+
+            }
+        }
+    }
+
+    /**
      * Use the crawler to map out the first 16 pages of a network. If a search query
      * is given the network will be searched and the found TFIDF-searchscores are
      * added to each relevant node.
+     * 
      * If withPageRank is set true the page rank which each node hands down to their
      * child nodes
      * is going to be displayed at the edges.
+     * 
+     * If withTop3 is set true the combined cosine-pagerank score is written to the
+     * nodes and the top 3 results are marked.
+     * 
      * The result is a graph saved in figures/net-graph if no options are given,
      * figures/${query} if a
-     * query is given or /figures/page-rank.png if withPageRank is true.
-     * figures/net-graph.png otherwise.
+     * query is given, figures/top3 if a query and withTop3 is true,
+     * /figures/page-rank.png if withPageRank is true.
+     * 
      * The seed needs to be set first before calling map().
      * 
      * @param query        The search query to be displayed.
      * @param withPageRank If true the page rank handed down will be displayed at
      *                     the graphs edges.
+     * @param withTop3     If true the cosine-pagerank score will be used and the
+     *                     top 3 results will be marked in the graph.
      * @throws SeedNotSetException Will be thrown if the seed is not set before
      *                             calling this method.
      * @throws java.io.IOException Will be thrown in case of a general error in the
      *                             crawl() method.
      */
-    private void map(String query, boolean withPageRank) throws SeedNotSetException, java.io.IOException {
+    private void map(String query, boolean withPageRank, boolean withTop3)
+            throws SeedNotSetException, java.io.IOException {
         // Get the search results.
         String[] seed = new String[queue.size()];
         int i = 0;
@@ -427,22 +514,15 @@ public class Crawler {
 
         List<Node> nodes = networkMap.getValuesInorder();
         if (query != null) {
-            List<String[]> queryResult = fullIndex.searchQueryTfIdf(query);
-
-            // Add the TFIDFScore to each node on the searchpath.
-            for (String[] entry : queryResult) {
-                String url = entry[0];
-
-                String score = String.format("%.6s", entry[1]);
-                for (Node node : nodes) {
-                    mxCell vertex = (mxCell) node.vertex;
-
-                    // Add the TfIdf to the nodes value.
-                    if (vertex.getValue().equals(url))
-                        vertex.setValue(vertex.getValue() + "\n" + score);
-                }
+            List<String[]> queryResult;
+            if (withTop3) {
+                fileName = "top3.png";
+                queryResult = fullIndex.searchQueryCosinePageRank(query, fullPageRankIndex);
+            } else {
+                fileName = query + ".png";
+                queryResult = fullIndex.searchQueryTfIdf(query);
             }
-            fileName = query + ".png";
+            setNodeValuesOf(queryResult, nodes, withTop3);
         }
         if (withPageRank) {
             // Add the pageRank to each edge.
@@ -481,10 +561,12 @@ public class Crawler {
     /**
      * Get the VectorIndex object containing the results of a crawl.
      * 
-     * @return The VectorIndex object.
+     * @return The VectorIndex object or null if no vector index has been added.
      */
     public VectorIndex getVectorIndex() {
-        return this.vectorIndex;
+        if (vectorIndex != null)
+            return this.vectorIndex;
+        return null;
     }
 
     /**
@@ -492,10 +574,13 @@ public class Crawler {
      * pageRankIndex.calcPageRanks() should be called before getting any page ranks
      * from the object.
      * 
-     * @return The PageRankIndex object.
+     * @return The PageRankIndex object or null if no PageRankIndex has been added
+     *         to the crawler.
      */
     public PageRankIndex getPageRankIndex() {
-        return this.pageRankIndex;
+        if (pageRankIndex != null)
+            return this.pageRankIndex;
+        return null;
     }
 
     /**
@@ -509,7 +594,7 @@ public class Crawler {
      *                             crawl() method.
      */
     public void map() throws SeedNotSetException, java.io.IOException {
-        map(null, false);
+        map(null, false, false);
     }
 
     /**
@@ -525,7 +610,24 @@ public class Crawler {
      *                             crawl() method.
      */
     public void mapQuery(String query) throws SeedNotSetException, java.io.IOException {
-        map(query, false);
+        map(query, false, false);
+    }
+
+    /**
+     * Use the crawler to map out the first 16 pages of a network and include the
+     * combined cosine similarity page rank search score for the given query in each
+     * node. The result is a graph
+     * saved in figures/top3.png.
+     * The seed needs to be set first before calling mapQuery().
+     * 
+     * @param query The search query to be displayed.
+     * @throws SeedNotSetException Will be thrown if the seed is not set before
+     *                             calling this method.
+     * @throws java.io.IOException Will be thrown in case of a general error in the
+     *                             crawl() method.
+     */
+    public void mapTop3(String query) throws SeedNotSetException, java.io.IOException {
+        map(query, false, true);
     }
 
     /**
@@ -541,18 +643,19 @@ public class Crawler {
      *                             crawl() method.
      */
     public void mapPageRank() throws SeedNotSetException, java.io.IOException {
-        map(null, true);
+        map(null, true, false);
     }
 
     /**
-     * Get the text content of the parsed Websites. Calling crawl() or map() will
-     * delete the
-     * current list.
+     * Get the text content of the parsed Websites.
      *
-     * @return
+     * @return The forward index containing the crawled websites or null if no
+     *         forward index has been added.
      */
-    public List<VectorSite> getForwardIndex() {
-        return vectorIndex.getForwardIndex();
+    public ForwardIndex getForwardIndex() {
+        if (forwardIndex != null)
+            return this.forwardIndex;
+        return null;
     }
 
     /**

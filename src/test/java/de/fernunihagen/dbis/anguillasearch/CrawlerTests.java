@@ -12,6 +12,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+import de.fernunihagen.dbis.anguillasearch.index.ForwardIndex;
+import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
+import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 
 /**
  * Unit tests for the crawler.
@@ -43,7 +46,7 @@ class CrawlerTests {
             Crawler crawler = new Crawler();
             try {
                 crawler.setSeed(seedUrls);
-                crawler.crawlWithoutIndexing();
+                crawler.crawl();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -70,7 +73,7 @@ class CrawlerTests {
             Crawler crawler = new Crawler();
             try {
                 crawler.setSeed(seedUrls);
-                crawler.crawlWithoutIndexing();
+                crawler.crawl();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -86,27 +89,31 @@ class CrawlerTests {
     /**
      * Generate the Graphs for the extra tasks.
      */
-    void mapTests() {
-        // Iterate over all test JSON files
-        for (JsonObject testJSON : testJSONs) {
+    @Test
+    void generateTests() {
+        Crawler crawler = new Crawler(new ForwardIndex(), new VectorIndex(), new PageRankIndex());
+
+        try {
             // Extract the seed URLs from the JSON file
-            String[] seedUrls = new Gson().fromJson(testJSON.get("Seed-URLs"), String[].class);
-            // Get the crawled pages
+            String[] seedUrls = new Gson().fromJson(
+                    Utils.parseJSONFile("intranet/cheesy4-a31d2f0d.json").get("Seed-URLs"),
+                    String[].class);
 
-            // Add your code here to get the number of crawled pages
-            Crawler crawler = new Crawler();
+            // Generate the net-graph map.
+            crawler.setSeed(seedUrls);
+            crawler.map();
+            // Generate the query map.
+            crawler.setSeed(seedUrls);
+            crawler.mapQuery("flavor");
+            // Generate the page rank map.
+            crawler.setSeed(seedUrls);
+            crawler.mapPageRank();
+            // Generate the top3 map.
+            crawler.setSeed(seedUrls);
+            crawler.mapTop3("flavor");
 
-            try {
-                crawler.setSeed(seedUrls);
-                crawler.map();
-                crawler.setSeed(seedUrls);
-                crawler.mapQuery("flavor");
-                crawler.setSeed(seedUrls);
-                crawler.mapPageRank();
-
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 }

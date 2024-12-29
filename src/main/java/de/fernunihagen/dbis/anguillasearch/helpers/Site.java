@@ -1,15 +1,20 @@
 package de.fernunihagen.dbis.anguillasearch.helpers;
 
 import java.util.List;
+import java.util.Set;
+import java.util.Map.Entry;
 
 /**
- * Simple container to package a single websites text.
+ * Simple container to package a single websites text divided by URL, title,
+ * list of Headings and paragraphs containing all text on the website.
+ * A vector of tokens with their TF value may also be added.
  */
 public class Site {
     public final String url;
     public final String title;
     public final List<String> headings;
     public final String paragraphs;
+    private Set<Entry<String, Long>> vector;
 
     /**
      * Instantiate a new website container.
@@ -25,5 +30,14 @@ public class Site {
         this.headings = headings;
         this.paragraphs = paragraphs;
 
+    }
+
+    /**
+     * Set the vector of tokens for this Site object.
+     * 
+     * @param newVector The new vector of tokens.
+     */
+    public void setVector(Set<Entry<String, Long>> newVector) {
+        this.vector = newVector;
     }
 }

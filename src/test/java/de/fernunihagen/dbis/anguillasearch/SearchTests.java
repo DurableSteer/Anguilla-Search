@@ -35,19 +35,22 @@ class SearchTests {
         List<String[]> foundEntries;
 
         // Place your code here to execute the search
-        Crawler crawler = new Crawler();
+        VectorIndex reverseIndex = new VectorIndex();
+        Crawler crawler = new Crawler(reverseIndex);
         crawler.setSeed(seedUrls);
         try {
             crawler.crawl();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        VectorIndex reverseIndex = crawler.getVectorIndex();
+
+        reverseIndex.finish();
+
         String queryString = "";
         for (String s : query)
             queryString += s;
 
-        foundEntries = reverseIndex.searchQueryTfIdf(queryString);
+        foundEntries = reverseIndex.searchQueryCosine(queryString);
         for (String[] entry : foundEntries) {
             foundURLs.add(entry[0]);
         }
