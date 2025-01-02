@@ -22,12 +22,13 @@ public class ForwardIndex {
     }
 
     /**
-     * Add a Site to the index. If a site with the same url has been added in the
-     * past it will be overwritten.
+     * Add a Site to the index. Duplicates will be ignored.
      * 
      * @param site The site to be added.
      */
     public void addSite(Site site) {
+        if (index.containsKey(site.url))
+            return;
         index.put(site.url, site);
     }
 
@@ -37,9 +38,19 @@ public class ForwardIndex {
      * @param url    The URL of the Site to which the vector will be added.
      * @param vector The vector to be added.
      */
-    public void addVector(String url, Set<Entry<String, Long>> vector) {
+    public void addVector(String url, Set<Entry<String, Integer>> vector) {
         if (index.containsKey(url))
             index.get(url).setVector(vector);
+    }
+
+    /**
+     * Get the indexed Site object with the given url from the index.
+     * 
+     * @param url The url of the website.
+     * @return The Site object for the given url.
+     */
+    public Site getSiteWithUrl(String url) {
+        return index.get(url);
     }
 
     /**
@@ -50,5 +61,14 @@ public class ForwardIndex {
      */
     public String getTitleOf(String url) {
         return index.get(url).title;
+    }
+
+    /**
+     * Get the number of sites saved in this index.
+     * 
+     * @return The number of sites indexed.
+     */
+    public int getNrOfSites() {
+        return index.size();
     }
 }

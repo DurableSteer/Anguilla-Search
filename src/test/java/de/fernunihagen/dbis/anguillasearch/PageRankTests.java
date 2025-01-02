@@ -44,7 +44,7 @@ class PageRankTests {
             Crawler crawler = new Crawler(pageRankIndex);
             crawler.setSeed(seedUrls);
             try {
-                crawler.crawlWithoutIndexing();
+                crawler.crawl();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -80,7 +80,7 @@ class PageRankTests {
             Crawler crawler = new Crawler(pageRankIndex);
             crawler.setSeed(seedUrls);
             try {
-                crawler.crawlWithoutIndexing();
+                crawler.crawl();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -118,7 +118,7 @@ class PageRankTests {
         Crawler crawler = new Crawler(pageRankIndex);
         crawler.setSeed(seedUrls);
         try {
-            crawler.crawlWithoutIndexing();
+            crawler.crawl();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -157,7 +157,7 @@ class PageRankTests {
         Crawler crawler = new Crawler(pageRankIndex);
         crawler.setSeed(seedUrls);
         try {
-            crawler.crawlWithoutIndexing();
+            crawler.crawl();
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

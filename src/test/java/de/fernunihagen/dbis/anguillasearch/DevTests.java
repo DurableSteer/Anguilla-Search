@@ -5,7 +5,12 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests written by the developer.
  */
-class DevTests {
+class DevTests {\
+
+    /**
+     * This is just a shortcut to run all unit tests with one click before uploading.
+     * Individual unit tests have been added to the appropriate files.
+     */
     @Test
     void runUnitTests() {
         try {
@@ -26,6 +31,7 @@ class DevTests {
             ReverseIndexTests reverseIndexTests = new ReverseIndexTests();
             ReverseIndexTests.setUp();
             reverseIndexTests.reverseIdexTFIDF();
+            reverseIndexTests.reverseIndexTests();
 
             SearchTests searchTests = new SearchTests();
             searchTests.findCorrectURLs();
@@ -34,6 +40,8 @@ class DevTests {
             CrawlerTests.setUp();
             crawlerTests.crawlAllWebsitesInProvidedNetwork();
             crawlerTests.findCorrectNumberOfLinks();
+            crawlerTests.testIndexCreation();
+            crawlerTests.testCrawl();
 
             CosineTests cosineTests = new CosineTests();
             cosineTests.equalVectors();
@@ -47,6 +55,9 @@ class DevTests {
             pageRankTests.sumOfPageRank();
             pageRankTests.analyseNetwork();
             pageRankTests.correctPageRankScores();
+
+            ForwardIndexTests forwardIndexTests = new ForwardIndexTests();
+            forwardIndexTests.forwardIndexTests();
 
         } catch (Exception e) {
             System.err.println(e.getMessage());

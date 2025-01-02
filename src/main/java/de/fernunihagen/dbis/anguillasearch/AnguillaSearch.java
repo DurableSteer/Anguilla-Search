@@ -35,6 +35,7 @@ public final class AnguillaSearch {
         // Print start message to logger
         LOGGER.info("Starting AnguillaSearch...");
 
+        // Create a Crawler and let it crawl the given network.
         ForwardIndex forwardIndex = new ForwardIndex();
         VectorIndex reverseIndex = new VectorIndex();
         PageRankIndex pageRankIndex = new PageRankIndex();
@@ -51,6 +52,7 @@ public final class AnguillaSearch {
         }
         LOGGER.info("Successfully crawled " + crawler.getNrOfSitesCrawled() + " pages.");
 
+        // Finish building the required indices.
         reverseIndex.finish();
         reverseIndex.normalize();
         LOGGER.info("Reverse index built.");
@@ -58,6 +60,7 @@ public final class AnguillaSearch {
         pageRankIndex.calcPageRanks();
         LOGGER.info("Page rank index built.");
 
+        // Start the main loop.
         LOGGER.info("You can now start searching.\n");
         Scanner scanner = new Scanner(System.in);
         LOGGER.info("Enter search query (or 'exit' to quit):");

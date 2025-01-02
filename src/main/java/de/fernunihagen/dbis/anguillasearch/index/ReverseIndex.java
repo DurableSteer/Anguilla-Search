@@ -2,15 +2,13 @@ package de.fernunihagen.dbis.anguillasearch.index;
 
 import java.util.List;
 import java.util.Properties;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.Collections;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
-import de.fernunihagen.dbis.anguillasearch.helpers.Token;
-
+import static de.fernunihagen.dbis.anguillasearch.index.IndexConfig.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -108,26 +106,10 @@ public class ReverseIndex {
      * Initialize basic lists and settings for the tokenization and lemmatization.
      */
     private void init() {
-        this.specialCharacters = Arrays.asList(":", ",", ".", "!", "|", "&", "'", "[", "]", "?", "-", "–",
-                "_", "/", "\\", "{", "}", "@", "^", "(", ")", "<", ">", "\"");
-
-        this.stopwords = Arrays.asList("'s", "in", "further", "myself", "than", "below",
-                "to", "should", "yours", "for", "have", "before", "my", "nor", "not", "s", "now", "their", "no",
-                "against", "under", "if", "does", "during", "herself", "him", "same", "been", "other", "will",
-                "who",
-                "these", "themselves", "are", "how", "while", "is", "himself", "some", "an", "then", "a", "had",
-                "can",
-                "each", "me", "your", "his", "being", "above", "but", "it", "between", "by", "do", "its", "too",
-                "only",
-                "did", "up", "be", "this", "through", "down", "there", "her", "them", "so", "our", "he", "about",
-                "they", "hers", "itself", "again", "as", "were", "when", "own", "until", "very", "theirs", "whom",
-                "you", "any", "once", "because", "few", "or", "more", "don", "here", "t", "what", "with", "into",
-                "from", "after", "has", "am", "ourselves", "out", "having", "at", "that", "all", "yourselves",
-                "just",
-                "over", "the", "such", "those", "yourself", "which", "where", "doing", "and", "of", "ours", "was",
-                "most", "i", "she", "we", "why", "off", "on", "both");
+        this.specialCharacters = REVERSEINDEX_SPECIAL_CHARACTERS;
+        this.stopwords = REVERSEINDEX_STOPWORDS;
         Properties props = new Properties();
-        props.setProperty("annotators", "tokenize,ssplit,pos,lemma");
+        props.setProperty("annotators", REVERSEINDEX_PIPELINE_ANNOTATORS);
         pipeline = new StanfordCoreNLP(props);
     }
 
@@ -229,7 +211,7 @@ public class ReverseIndex {
         for (CoreLabel tok : content.tokens()) {
             String lemma = tok.lemma();
 
-            // remove stopwords and special characters.
+            // Remove stopwords and special characters.
             if (specialCharacters.contains(lemma) || stopwords.contains(lemma))
                 continue;
 

@@ -1,6 +1,8 @@
 package de.fernunihagen.dbis.anguillasearch.helpers;
 
-public class HelperFunctions {
+public final class HelperFunctions {
+    private HelperFunctions() {
+    }
 
     /**
      * Find and return the bigger of the two numbers.

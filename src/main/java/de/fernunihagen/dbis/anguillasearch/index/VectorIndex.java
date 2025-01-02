@@ -10,12 +10,11 @@ import java.util.Properties;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map.Entry;
-import java.util.Arrays;
 import java.util.Collections;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
+import static de.fernunihagen.dbis.anguillasearch.index.IndexConfig.*;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
-import de.fernunihagen.dbis.anguillasearch.helpers.Token;
 import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
@@ -53,26 +52,10 @@ public class VectorIndex {
      * Initialize basic lists and settings for the tokenization and lemmatization.
      */
     private void init() {
-        this.specialCharacters = Arrays.asList(":", ",", ".", "!", "|", "&", "'", "[", "]", "?", "-", "–",
-                "_", "/", "\\", "{", "}", "@", "^", "(", ")", "<", ">", "\"");
-
-        this.stopwords = Arrays.asList("'s", "in", "further", "myself", "than", "below",
-                "to", "should", "yours", "for", "have", "before", "my", "nor", "not", "s", "now", "their", "no",
-                "against", "under", "if", "does", "during", "herself", "him", "same", "been", "other", "will",
-                "who",
-                "these", "themselves", "are", "how", "while", "is", "himself", "some", "an", "then", "a", "had",
-                "can",
-                "each", "me", "your", "his", "being", "above", "but", "it", "between", "by", "do", "its", "too",
-                "only",
-                "did", "up", "be", "this", "through", "down", "there", "her", "them", "so", "our", "he", "about",
-                "they", "hers", "itself", "again", "as", "were", "when", "own", "until", "very", "theirs", "whom",
-                "you", "any", "once", "because", "few", "or", "more", "don", "here", "t", "what", "with", "into",
-                "from", "after", "has", "am", "ourselves", "out", "having", "at", "that", "all", "yourselves",
-                "just",
-                "over", "the", "such", "those", "yourself", "which", "where", "doing", "and", "of", "ours", "was",
-                "most", "i", "she", "we", "why", "off", "on", "both");
+        this.specialCharacters = REVERSEINDEX_SPECIAL_CHARACTERS;
+        this.stopwords = REVERSEINDEX_STOPWORDS;
         Properties props = new Properties();
-        props.setProperty("annotators", "tokenize,ssplit,pos,lemma");
+        props.setProperty("annotators", REVERSEINDEX_PIPELINE_ANNOTATORS);
         pipeline = new StanfordCoreNLP(props);
     }
 
@@ -100,13 +83,14 @@ public class VectorIndex {
     public void addSite(Site site) {
         if (documentIndex.containsKey(site.url))
             return;
+
         TreeSet<Token> tokens = new TreeSet<>();
 
         DocInfo docInfo = new DocInfo();
         // Convert site content into one lowercase string.
         StringBuilder siteContent = new StringBuilder(site.title.toLowerCase());
         for (String heading : site.headings)
-            siteContent.append(heading.toLowerCase());
+            siteContent.append(" " + heading.toLowerCase());
         siteContent.append(site.paragraphs.toLowerCase());
 
         // Tokenize and lemmatize the sites.
@@ -162,6 +146,7 @@ public class VectorIndex {
     /**
      * Do some finishing steps to enable searching on the index. After finishing the
      * index no more sites may be added.
+     * 
      * This needs to be called after adding all Sites to the index and before
      * calling any of the search methods, getTfIdfOf() or normalize().
      */
@@ -189,7 +174,7 @@ public class VectorIndex {
                 norm += Math.pow(tfIdf, 2);
             norm = Math.sqrt(norm);
 
-            // Normalize the document vector for efficiency.
+            // Normalize the document vector.
             for (int i = 0; i < doc.size(); i++)
                 doc.set(i, doc.get(i) / norm);
         }
@@ -222,8 +207,9 @@ public class VectorIndex {
 
     /**
      * Find the sites of the index most relevant to the given search query.
-     * This method uses the term frequency and Inverse Document frequency to
+     * This method uses the term frequency and Inverse Document frequency (TFIDF) to
      * determine relevance.
+     * 
      * The Index needs to be finished first.
      * 
      * @param query The search query to be used.
@@ -379,8 +365,7 @@ public class VectorIndex {
     /**
      * Find the sites of the index most relevant to the given search query.
      * This method uses the cosine similarity between query and indexed sites as
-     * well as the page rank to
-     * determine relevance.
+     * well as the page rank to determine relevance.
      * 
      * The Index needs to be finished first.
      * Normalize() may be called to increase this methods efficiency.
@@ -390,9 +375,9 @@ public class VectorIndex {
      *                      for each website in the VectorIndex's network and
      *                      calcPageRanks() needs to be called prior to calling this
      *                      method.
-     * @return A List of String[2] sorted by TfIdf score in decending order.
+     * @return A List of String[2] sorted by search score in decending order.
      *         String[0] containins a sites url
-     *         String[1] containins the sites calculated TfIdf score.
+     *         String[1] containins the sites calculated search score.
      */
     public List<String[]> searchQueryCosinePageRank(String query, PageRankIndex pageRankIndex) {
         LinkedList<String[]> results = new LinkedList<>();
@@ -408,7 +393,7 @@ public class VectorIndex {
             maxPageRank = HelperFunctions.max(pageRank, maxPageRank);
         }
 
-        // Calculate the combined score
+        // Calculate the combined score.
         for (String[] entry : cosineResults) {
             double similarityScore = Double.parseDouble(entry[1]);
             double pageRank = pageRankIndex.getPageRankOf(entry[0]);
@@ -425,7 +410,7 @@ public class VectorIndex {
     /**
      * Find the cosine similarity between two given vectors.
      * 
-     * Assumes that a and b are of equal lenght.
+     * Assumes that a and b have the same number of entries.
      * 
      * @param a The first vector.
      * @param b The second vector.
@@ -448,7 +433,7 @@ public class VectorIndex {
     /**
      * Find the cosine similarity between two given normalized vectors.
      * 
-     * Assumes that a and b are of equal lenght.
+     * Assumes that a and b have the same number of entries.
      * 
      * @param a The first vector.
      * @param b The second vector.
@@ -465,7 +450,7 @@ public class VectorIndex {
     }
 
     /**
-     * Format foundSites into a List of String[2]with
+     * Format foundSites into a List of String[2] with
      * String[1] = each sites url
      * String[2] = each sites search score
      * 
@@ -503,7 +488,7 @@ public class VectorIndex {
     /**
      * Get the TfIdf score for the given token for the given document id.
      * 
-     * @param token The token to be checked for.
+     * @param token The (token-) word to be checked for.
      * @param docId The document id of the TfIdf score.
      * @return The found TfIdf score or null if either the token or document is not
      *         in the index.
@@ -527,5 +512,14 @@ public class VectorIndex {
      */
     public boolean docHasToken(String token, String docId) {
         return getTfIdfOf(token, docId) != null;
+    }
+
+    /**
+     * Get the number of sites saved in this index.
+     * 
+     * @return The number of sites indexed.
+     */
+    public int getNrOfSites() {
+        return (int) totalDocCount;
     }
 }

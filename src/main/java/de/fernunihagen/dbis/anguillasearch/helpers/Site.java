@@ -14,7 +14,7 @@ public class Site {
     public final String title;
     public final List<String> headings;
     public final String paragraphs;
-    private Set<Entry<String, Long>> vector;
+    private Set<Entry<String, Integer>> vector;
 
     /**
      * Instantiate a new website container.
@@ -37,7 +37,7 @@ public class Site {
      * 
      * @param newVector The new vector of tokens.
      */
-    public void setVector(Set<Entry<String, Long>> newVector) {
+    public void setVector(Set<Entry<String, Integer>> newVector) {
         this.vector = newVector;
     }
 }

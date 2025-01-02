@@ -10,7 +10,7 @@ import java.util.Set;
  */
 public class DocInfo {
 
-    private TreeMap<String, Long> words = new TreeMap<>();
+    private TreeMap<String, Integer> words = new TreeMap<>();
     private double totalWordCount = 0;
 
     /**
@@ -21,18 +21,18 @@ public class DocInfo {
     }
 
     /**
-     * Increment the word counter for the given word on this document.
+     * Increment the word counter for the given (token-)word on this document.
      * 
      * @param word The word whose counter shall be increased.
      */
     public void incrementWordCountOf(String word) {
-        long wordCount = this.words.getOrDefault(word, 0l);
+        Integer wordCount = this.words.getOrDefault(word, 0);
         wordCount++;
         this.words.put(word, wordCount);
     }
 
     /**
-     * Get the TF score of the the given word.
+     * Get the TF score of the the given (token-)word.
      * 
      * @param word This words TF score will be returned.
      * @return The TF score of word.
@@ -40,11 +40,11 @@ public class DocInfo {
     public double getTfOf(String word) {
         if (this.totalWordCount == 0)
             return 0;
-        long wordCount = words.get(word);
+        Integer wordCount = words.get(word);
         return wordCount / totalWordCount;
     }
 
-    public Set<Entry<String, Long>> getDocVectorized() {
+    public Set<Entry<String, Integer>> getDocVectorized() {
         return words.entrySet();
     }
 }

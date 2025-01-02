@@ -1,9 +1,14 @@
-package de.fernunihagen.dbis.anguillasearch.helpers;
+package de.fernunihagen.dbis.anguillasearch.index;
 
 import java.util.List;
 import java.util.TreeMap;
 
+import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
+
 /**
+ * This class was used with the ReverseIndex class and is archaic as the crawler
+ * uses the VectorIndex instead now.
+ * 
  * A Token object represents a tokenized and lemmatized word for use with a
  * pagerank algorithm.
  * Each token contains a list of document ids in which the word has been found

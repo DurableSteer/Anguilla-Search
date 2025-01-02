@@ -9,9 +9,9 @@ import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 /**
  * An efficient implementation of a unique FIFO queue that only accepts elements
  * which haven't been queued before.
- * An AVL tree is used to store added values for douplicate checking so queue()
- * works in O(log(n)).
- * The actual queue is a linked list hence all other operations are O(1).
+ * 
+ * An queue() works in O(log(n)).
+ * All other operations are O(1).
  * 
  * @author Nico Beyer
  */
@@ -21,7 +21,7 @@ public class UniqQueue {
     private LinkedList<String> urls;
 
     /**
-     * Instantiate a new empty UniqQueue.
+     * Instantiate a new empty UniqQueue object.
      */
     public UniqQueue() {
         prevQueuedUrls = new AVLTree<>();
@@ -51,7 +51,7 @@ public class UniqQueue {
     }
 
     /**
-     * Finds the number of currently queued elements.
+     * Get the number of currently queued elements.
      * 
      * @return The number of currently queued URLs.
      */

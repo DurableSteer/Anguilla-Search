@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import static de.fernunihagen.dbis.anguillasearch.pagerank.PageRankConfig.*;
 
 import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
 
@@ -13,7 +14,8 @@ import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
  * A PageRankIndex object calculates and contains the page rank scores to a list
  * of given links.
  * lists of links from one source(website) can be added coninuously. When all
- * links have been added, the actual pageranks can be calculated.
+ * links have been added, the actual pageranks can be calculated by calling
+ * calcPageRanks().
  * After the page ranks have been calculated no more links may be added, but the
  * final page ranks can be accessed.
  * 
@@ -89,15 +91,17 @@ public class PageRankIndex {
     /**
      * Find the page rank for each of the added websites.
      * After calling this method no more links may be added to the index.
+     * 
      * The algorithm will stop after timeout iterations to avoid an infinite loop if
      * the algorithm doesn't converge.
+     * 
      * A dampening factor may be set to use a ranksource of (1-dFactor) values
-     * for the dFactor may in the range of 0 < dFactor < 1.
+     * of the dFactor may be in the range of 0 < dFactor < 1.
      * 
      * For debug purposes each iterations results may be printed to the console.
      * 
      * @param timeout The max number of iterations the algorithm may do.
-     * @param dFactor The dampening/ranksource factor to aid convergence.
+     * @param dFactor The dampening/ranksource factor.
      * @param verbose If set true each iterations results will be printed to the
      *                console.
      */
@@ -114,7 +118,7 @@ public class PageRankIndex {
         // pagerank.
         double maxDiff = 1.0;
         int i = 0;
-        while ((maxDiff > 0.0001) && (i < timeout)) {
+        while ((maxDiff > PAGERANKVALUE_MAX_DIFFERENCE) && (i < timeout)) {
             maxDiff = 0.0;
             if (verbose)
                 System.out.println("--------------------------------- " + i + " ---------------------------------");
@@ -145,7 +149,7 @@ public class PageRankIndex {
      * @param timeout The max number of iterations the algorithm may do.
      */
     public void calcPageRanks(int timeout) {
-        calcPageRanks(timeout, 0.85, false);
+        calcPageRanks(timeout, PAGERANK_STD_DFACTOR, false);
     }
 
     /**
@@ -156,7 +160,7 @@ public class PageRankIndex {
      * the algorithm doesn't converge.
      */
     public void calcPageRanks() {
-        calcPageRanks(100000, 0.85, false);
+        calcPageRanks(PAGERANK_STD_TIMEOUT, PAGERANK_STD_DFACTOR, false);
     }
 
     /**
@@ -182,5 +186,14 @@ public class PageRankIndex {
         for (Entry<String, Page> entry : pageIndex.entrySet())
             result.put(entry.getKey(), entry.getValue().pageRank);
         return result;
+    }
+
+    /**
+     * Get the number of sites saved in this index.
+     * 
+     * @return The number of sites indexed.
+     */
+    public int getNrOfSites() {
+        return this.pageCount;
     }
 }
