@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import de.fernunihagen.dbis.anguillasearch.index.IndexSearcher;
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
+import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
 /**
@@ -50,7 +52,8 @@ class SearchTests {
         for (String s : query)
             queryString += s;
 
-        foundEntries = reverseIndex.searchQueryCosine(queryString);
+        foundEntries = (new IndexSearcher(reverseIndex)).searchQueryTfIdf(queryString);
+
         for (String[] entry : foundEntries) {
             foundURLs.add(entry[0]);
         }

@@ -1,3 +1,38 @@
+# Anguilla Search 
+
+The Anguilla search is a simple search engine that aims to implement the basic functioning of a searchengine from crawling a network to searching the found websites by different metrics.
+
+
+## Features
+
+- A webcrawler that can search a network and pass the found websites information on to indices.
+- A forward index that can store sites and allows to efficiently find a websites content by its URL.
+- A reverse index that utilizes a vectorized storage and efficient search for relevant websites URLs based on a searchquery.
+- Available search algorithms for the reverse index are:
+- - term frequency-inverse document frequency similarity (TFIDF score)
+- - cosine similarity 
+- - combined cosine similarity-page rank score.
+- A page rank index that allows for iterative calculation of page rank scores for a set of given links.
+- A map function that allows automatic creation of a graph displaying the websites in a given network and their connection as well as the following extra information:
+- - TFIDF scores for each node in the graph.
+- - Cosine similarity scores for each node found in a given searchquery.
+- - Page rank score transfered between each of the nodes. 
+- - Combined cosine similarity-page rank score for each node found in a given searchquery and top 3 results found.
+
+## Usage
+
+The best way to start the search engine is to start the AnguillaSearch.java class from the integrated environment as the included websites to be searched are only available from inside the environment.
+
+Upon start the search engine will crawl a network in the intranet and create the required indices. This may take a while depending on the executing system.
+
+The engine will prompt for a search query when everything is ready. Once entered the results of the search will be displayed and a new search query may be entered.
+The query 'exit' will end the search engine.
+
+## How to install
+
+A comprehensive guide on how to run Anguilla Search is described under [Execute the JAR](#execute-the-jar).
+Make sure that the [Installation Dependencies](#installation-dependencies) are met.
+
 # Anguilla Search (Dev)
 
 This is a complete programming environment with minimal dependencies. VSCode is provided as a web application ([Coder Server](https://coder.com)) with all the necessary extensions.
@@ -19,6 +54,10 @@ An intranet with various websites is also automatically provided to ensure a sta
 
 ## Contents
 
+- [Anguilla Search](#anguilla-search)
+  - [Features](#features)
+  - [Usage](#usage)
+  - [How to install](#how-to-install)
 - [Anguilla Search (Dev)](#anguilla-search-dev)
   - [Contents](#contents)
   - [Installation (Dependencies)](#installation-dependencies)

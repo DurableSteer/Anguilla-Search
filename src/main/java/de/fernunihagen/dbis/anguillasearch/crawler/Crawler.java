@@ -27,6 +27,7 @@ import com.mxgraph.view.mxGraph;
 import de.fernunihagen.dbis.anguillasearch.helpers.AVLTree;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
 import de.fernunihagen.dbis.anguillasearch.index.ForwardIndex;
+import de.fernunihagen.dbis.anguillasearch.index.IndexSearcher;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 import static de.fernunihagen.dbis.anguillasearch.crawler.CrawlerConfig.*;
@@ -496,6 +497,7 @@ public class Crawler {
         VectorIndex fullIndex = this.vectorIndex;
         PageRankIndex fullPageRankIndex = this.pageRankIndex;
         fullPageRankIndex.calcPageRanks();
+        IndexSearcher indexSearcher = new IndexSearcher(fullIndex);
 
         // Get the map data.
         setSeed(seed);
@@ -509,10 +511,10 @@ public class Crawler {
             List<String[]> queryResult;
             if (withTop3) {
                 fileName = "top3.png";
-                queryResult = fullIndex.searchQueryCosinePageRank(query, fullPageRankIndex);
+                queryResult = indexSearcher.searchQueryCosinePageRank(query, fullPageRankIndex);
             } else {
                 fileName = query + ".png";
-                queryResult = fullIndex.searchQueryTfIdf(query);
+                queryResult = indexSearcher.searchQueryTfIdf(query);
             }
             setNodeValuesOf(queryResult, nodes, withTop3);
         }

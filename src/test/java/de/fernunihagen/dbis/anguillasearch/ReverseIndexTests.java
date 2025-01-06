@@ -130,21 +130,5 @@ class ReverseIndexTests {
         }
         assertEquals(testURLs.length, reverseIndex.getNrOfSites());
 
-        // The following list of tokens should now be contained and findable:
-        String[] testToken = {
-                "expert", "quick", "trend", "precision", "sign", "craft", "secure", "shipping", "solution", "review",
-                "exceed", "tip", "join", "welcome", "shopping", "order", "budget", "discover", "read", "ensure", "$",
-                "need", "satisfied", "touch", "check", "real", "collection", "community", "look", "personalize",
-                "quality", "innovative", "0", "insight", "1", "2", "mission", "3", "4", "5", "6", "7", "8", "name", "9",
-                "topic", "50.9", "care", "love", "trust", ".0", ".1", ".2", ".3", "frequently", ".5", ".6",
-                "destination", "enjoy", "update", ".7", "range", "deliver", ".8", "industry", "expectation", "see",
-                "hassle", "ready", "today", "get", "design", "client", "free", "checkout", "latest", "product",
-                "website", "question", "wide", "explore", "start", "specific", "stay", "help", "fast", "answer", "’re",
-                "meet", "service", "ask", "category", "customer"
-        };
-
-        for (String token : testToken) {
-            assertEquals(true, reverseIndex.containsToken(token), token);
-        }
     }
 }

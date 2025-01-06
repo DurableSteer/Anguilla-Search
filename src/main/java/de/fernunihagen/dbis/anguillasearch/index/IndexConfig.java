@@ -34,7 +34,7 @@ public final class IndexConfig {
         static final List<String> REVERSEINDEX_SPECIAL_CHARACTERS = Arrays.asList(":", ",", ".", "!", "|", "&", "'",
                         "[",
                         "]", "?", "-", "–", "_", "/", "\\", "{", "}", "@", "^", "(", ")", "<", ">", "\"", "%", "©",
-                        "—");
+                        "—", "$");
 
         static final String REVERSEINDEX_PIPELINE_ANNOTATORS = "tokenize, ssplit, pos, lemma";
 

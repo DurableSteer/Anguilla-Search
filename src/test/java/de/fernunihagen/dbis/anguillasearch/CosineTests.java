@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import org.junit.jupiter.api.Test;
 
+import de.fernunihagen.dbis.anguillasearch.index.IndexSearcher;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
 /**
@@ -14,6 +15,7 @@ import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
  */
 class CosineTests {
     VectorIndex vi = new VectorIndex();
+    IndexSearcher is = new IndexSearcher(vi);
 
     private ArrayList<Double> ArrToArrList(double[] arr) {
         ArrayList<Double> arrList = new ArrayList<>();
@@ -35,7 +37,7 @@ class CosineTests {
 
         // The cosine similarity of two equal vectors should be 1.0
         // Replace the cosineSimilarity method with your implementation
-        assertEquals(1.0, vi.calcCosineSimilarity(A, B));
+        assertEquals(1.0, is.calcCosineSimilarity(A, B));
     }
 
     @Test
@@ -48,7 +50,7 @@ class CosineTests {
         ArrayList<Double> B = ArrToArrList(vectorB);
         // The cosine similarity of two orthogonal vectors should be 0.0
         // Replace the cosineSimilarity method with your implementation
-        assertEquals(0.0, vi.calcCosineSimilarity(A, B));
+        assertEquals(0.0, is.calcCosineSimilarity(A, B));
 
     }
 
@@ -63,8 +65,8 @@ class CosineTests {
         // The cosine similarity of two random positive vectors should be between 0.0
         // and 1.0
         // Replace the cosineSimilarity method with your implementation
-        assertTrue(vi.calcCosineSimilarity(A, B) > 0.0);
-        assertTrue(vi.calcCosineSimilarity(A, B) < 1.0);
+        assertTrue(is.calcCosineSimilarity(A, B) > 0.0);
+        assertTrue(is.calcCosineSimilarity(A, B) < 1.0);
 
     }
 
@@ -78,6 +80,6 @@ class CosineTests {
         ArrayList<Double> B = ArrToArrList(vectorB);
         // The cosine similarity of these vectors should be 0.7
         // Replace the cosineSimilarity method with your implementation
-        assertTrue(Math.abs(vi.calcCosineSimilarity(A, B) - 0.6364) < 0.0001);
+        assertTrue(Math.abs(is.calcCosineSimilarity(A, B) - 0.6364) < 0.0001);
     }
 }

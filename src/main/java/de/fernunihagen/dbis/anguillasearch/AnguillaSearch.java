@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
 import de.fernunihagen.dbis.anguillasearch.index.ForwardIndex;
+import de.fernunihagen.dbis.anguillasearch.index.IndexSearcher;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
 
@@ -39,6 +40,7 @@ public final class AnguillaSearch {
         ForwardIndex forwardIndex = new ForwardIndex();
         VectorIndex reverseIndex = new VectorIndex();
         PageRankIndex pageRankIndex = new PageRankIndex();
+        IndexSearcher indexSearcher = new IndexSearcher(reverseIndex);
         Crawler crawler = new Crawler(forwardIndex, reverseIndex, pageRankIndex);
 
         try {
@@ -68,7 +70,7 @@ public final class AnguillaSearch {
 
         while (!input.equals("exit")) {
             int i = 1;
-            List<String[]> queryResults = reverseIndex.searchQueryCosinePageRank(input, pageRankIndex);
+            List<String[]> queryResults = indexSearcher.searchQueryCosinePageRank(input, pageRankIndex);
             if (queryResults.size() == 0)
                 LOGGER.info("No relevant websites were found.");
             for (String[] entry : queryResults) {

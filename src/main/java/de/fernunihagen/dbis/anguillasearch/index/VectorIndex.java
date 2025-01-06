@@ -1,21 +1,20 @@
 package de.fernunihagen.dbis.anguillasearch.index;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
+
 import java.util.Collections;
 
-import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
 import static de.fernunihagen.dbis.anguillasearch.index.IndexConfig.*;
 import de.fernunihagen.dbis.anguillasearch.helpers.Site;
-import de.fernunihagen.dbis.anguillasearch.pagerank.PageRankIndex;
+
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -35,9 +34,13 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
  * @author Nico Beyer
  */
 public class VectorIndex {
+    // Saves the index in the matrix for each added document.
     private TreeMap<String, Integer> documentIndex = new TreeMap<>();
+    // Saves the matrix index for each token.
     private HashMap<String, Integer> tokenIndex = new HashMap<>();
+    // This is matrix[i,j] with i = documents and j = tokens of that document.
     private ArrayList<ArrayList<Double>> matrix = new ArrayList<>();
+    // The number of documents for each token.
     private TreeMap<Integer, Integer> docsPerTokIndex = new TreeMap<>();
 
     private ForwardIndex forwardIndex = null;
@@ -91,7 +94,7 @@ public class VectorIndex {
         StringBuilder siteContent = new StringBuilder(site.title.toLowerCase());
         for (String heading : site.headings)
             siteContent.append(" " + heading.toLowerCase());
-        siteContent.append(site.paragraphs.toLowerCase());
+        siteContent.append(" " + site.paragraphs.toLowerCase());
 
         // Tokenize and lemmatize the sites.
         CoreDocument content = new CoreDocument(siteContent.toString());
@@ -182,125 +185,49 @@ public class VectorIndex {
     }
 
     /**
-     * Format a String into a list of lemmatized tokens free of stopwords and
-     * special characters.
+     * Get the size of all vectors saved in the index.
      * 
-     * @param query The String to be formated.
-     * @return A list of all tokens found in query.
+     * @return The size of all vectors.
      */
-    private LinkedList<String> formatQuery(String query) {
-        LinkedList<String> tokens = new LinkedList<>();
-
-        // Format tokenize and lemmatize the query string.
-        CoreDocument content = new CoreDocument(query.toLowerCase());
-        pipeline.annotate(content);
-
-        // Remove stopwords and special characters.
-        for (CoreLabel tok : content.tokens()) {
-            String lemma = tok.lemma();
-            if (specialCharacters.contains(lemma) || stopwords.contains(lemma))
-                continue;
-            tokens.addLast(lemma);
-        }
-        return tokens;
+    public int getVectorSize() {
+        if (matrix.isEmpty())
+            return 0;
+        return matrix.get(0).size();
     }
 
     /**
-     * Find the sites of the index most relevant to the given search query.
-     * This method uses the term frequency and Inverse Document frequency (TFIDF) to
-     * determine relevance.
+     * Check if this index has been normalized by calling normalize().
      * 
-     * The Index needs to be finished first.
-     * 
-     * @param query The search query to be used.
-     * @return A List of String[2] sorted by TfIdf score in decending order.
-     *         String[0] containins a sites url
-     *         String[1] containins the sites calculated TfIdf score.
+     * @return True if the index is normalized, false otherwise.
      */
-    public List<String[]> searchQueryTfIdf(String query) {
-        ArrayList<Entry<Double, String>> foundSites = new ArrayList<>();
+    public boolean isNormalized() {
+        return this.normalized;
+    }
 
-        LinkedList<String> tokens = formatQuery(query);
-
-        for (Entry<String, Integer> entry : documentIndex.entrySet()) {
-            Integer docindex = documentIndex.get(entry.getKey());
-            Double tfIdfScore = 0.0;
-
-            for (String tok : tokens) {
-                Integer tokIndex = tokenIndex.get(tok);
-                if (tokIndex == null)
-                    continue;
-                tfIdfScore += matrix.get(docindex).get(tokIndex);
-            }
-            Entry<Double, String> site = new AbstractMap.SimpleEntry<>(tfIdfScore, entry.getKey());
-            foundSites.add(site);
-        }
-        // Sort the found sites by TfIdf score.
-        Collections.sort(foundSites, (entry, other) -> other.getKey().compareTo(entry.getKey()));
-
-        // Format for the specification and return.
-        return formatSearchOutput(foundSites);
+    /*
+     * Get a Set of all document identifiers stored in this index.
+     * 
+     * @return A Set of all document identifiers in this index.
+     */
+    public Set<String> getStoredDocumentIds() {
+        return documentIndex.keySet();
     }
 
     /**
-     * Format the given weight distribution for a search query into a lemmatized
-     * form.
+     * Format a given List of lemmatized tokens with weights into a vector in the
+     * same order as all of the documents in the index.
      * 
-     * @param weights A weight distribution containing a Weight for certain tokens.
-     * @return A copy of weights in which each word has been replaced by its lemma.
-     */
-    private Map<String, Double> formatWeights(Map<String, Double> weights) {
-        Map<String, Double> ret = new TreeMap<>();
-
-        for (Entry<String, Double> entry : weights.entrySet()) {
-            CoreDocument content = new CoreDocument(entry.getKey().toLowerCase());
-            pipeline.annotate(content);
-            String lemma = content.tokens().get(0).lemma();
-
-            if (specialCharacters.contains(lemma) || stopwords.contains(lemma))
-                continue;
-
-            ret.put(lemma, entry.getValue());
-        }
-
-        // Normalize the given weights.
-        Double sum = 0.0;
-        for (Double value : ret.values())
-            sum += value;
-
-        // If invalid weights are given avoid divide by zero.
-        if (sum == 0.0)
-            sum = 1.0;
-        for (Entry<String, Double> entry : ret.entrySet())
-            ret.put(entry.getKey(), entry.getValue() / sum);
-
-        return ret;
-    }
-
-    /**
-     * Find the sites of the index most relevant to the given search query.
-     * This method uses the cosine similarity between query and indexed sites to
-     * determine relevance.
-     * 
-     * The search queries tokens can be weight by a Map of (token,weight) pairs
+     * The tokens can be weight by a Map of (token,weight) pairs
      * given. Each weight represents its tokens weight as a percentage e.g. 1.00
      * stands for 100% and 0.01 for 1%.
      * The weights are normalized, so if all weights add up to more than 100% the
      * ratio between all weights stays the same.
      * 
-     * The Index needs to be finished first.
-     * Normalize() may be called to increase this methods efficiency.
-     * 
-     * @param query   The search query to be used.
-     * @param weights The weights to be applied to the search query.
-     * @return A List of String[2] sorted by TfIdf score in decending order.
-     *         String[0] containins a sites url
-     *         String[1] containins the sites calculated TfIdf score.
+     * @param tokens  A list of lemmatized tokens to be formated.
+     * @param weights A Map that maps a weight from onto each token.
+     * @return A vector of weight tokens
      */
-    public List<String[]> searchQueryCosine(String query, Map<String, Double> weights) {
-
-        LinkedList<String> tokens = formatQuery(query);
-        Map<String, Double> tokenizedWeights = formatWeights(weights);
+    public List<Double> getQueryVectorFor(List<String> tokens, Map<String, Double> weights) {
         int vectorSize = getVectorSize();
 
         // Create a vector in the same order as the matrix rows and apply weights.
@@ -313,166 +240,20 @@ public class VectorIndex {
             if (tokenIndx == null)
                 continue;
 
-            queryVector.set(tokenIndx, tokenizedWeights.getOrDefault(tok, 0.0));
+            queryVector.set(tokenIndx, weights.getOrDefault(tok, 0.0));
         }
 
-        // Find the cosine similarity for each of the documents and save.
-        ArrayList<Entry<Double, String>> foundSites = new ArrayList<>();
-        for (Entry<String, Integer> entry : documentIndex.entrySet()) {
-            String doc = entry.getKey();
-            Integer docIndex = documentIndex.get(doc);
-
-            // Find the cosine similarity between the querys and the documents vectors.
-            double cosineSimilarity = 0.0;
-            if (normalized)
-                cosineSimilarity = calcCosineSimilarityNormalized(queryVector, matrix.get(docIndex));
-            else
-                cosineSimilarity = calcCosineSimilarity(queryVector, matrix.get(docIndex));
-
-            // Only add pages that share similiarity with the query.
-            if (cosineSimilarity != 0.0)
-                foundSites.add(new AbstractMap.SimpleEntry<>(cosineSimilarity, doc));
-        }
-
-        // Sort the results by cosine similarity.
-        Collections.sort(foundSites, (entry, other) -> other.getKey().compareTo(entry.getKey()));
-
-        // Format the ordered results to List<String[]> and return.
-        return formatSearchOutput(foundSites);
-
+        return queryVector;
     }
 
     /**
-     * Find the sites of the index most relevant to the given search query.
-     * This method uses the cosine similarity between query and indexed sites to
-     * determine relevance.
+     * Get the vector of TFIDF values of a given document.
      * 
-     * The Index needs to be finished first.
-     * Normalize() may be called to increase this methods efficiency.
-     * 
-     * @param query The search query to be used.
-     * @return A List of String[2] sorted by TfIdf score in decending order.
-     *         String[0] containins a sites url
-     *         String[1] containins the sites calculated TfIdf score.
+     * @param documentId The identifier of the document.
+     * @return A List of TFIDF values, one for each token in the index.
      */
-    public List<String[]> searchQueryCosine(String query) {
-        Map<String, Double> weights = new TreeMap<>();
-        for (String word : query.split(" "))
-            weights.put(word, 1.0);
-        return searchQueryCosine(query, weights);
-    }
-
-    /**
-     * Find the sites of the index most relevant to the given search query.
-     * This method uses the cosine similarity between query and indexed sites as
-     * well as the page rank to determine relevance.
-     * 
-     * The Index needs to be finished first.
-     * Normalize() may be called to increase this methods efficiency.
-     * 
-     * @param query         The search query to be used.
-     * @param pageRankIndex The PageRankIndex to be used. This has to contain values
-     *                      for each website in the VectorIndex's network and
-     *                      calcPageRanks() needs to be called prior to calling this
-     *                      method.
-     * @return A List of String[2] sorted by search score in decending order.
-     *         String[0] containins a sites url
-     *         String[1] containins the sites calculated search score.
-     */
-    public List<String[]> searchQueryCosinePageRank(String query, PageRankIndex pageRankIndex) {
-        LinkedList<String[]> results = new LinkedList<>();
-        List<String[]> cosineResults = searchQueryCosine(query);
-        double maxSimilarity = Double.NEGATIVE_INFINITY;
-        double maxPageRank = Double.NEGATIVE_INFINITY;
-
-        // Find the maximum similarity and pageRank in the search results.
-        for (String[] entry : cosineResults) {
-            double similarityScore = Double.parseDouble(entry[1]);
-            double pageRank = pageRankIndex.getPageRankOf(entry[0]);
-            maxSimilarity = HelperFunctions.max(similarityScore, maxSimilarity);
-            maxPageRank = HelperFunctions.max(pageRank, maxPageRank);
-        }
-
-        // Calculate the combined score.
-        for (String[] entry : cosineResults) {
-            double similarityScore = Double.parseDouble(entry[1]);
-            double pageRank = pageRankIndex.getPageRankOf(entry[0]);
-            results.addLast(new String[] { entry[0],
-                    Double.toString(similarityScore / maxSimilarity + pageRank / maxPageRank) });
-        }
-
-        // Sort the results by the new searchscore.
-        Collections.sort(results, (entry, other) -> other[1].compareTo(entry[1]));
-
-        return results;
-    }
-
-    /**
-     * Find the cosine similarity between two given vectors.
-     * 
-     * Assumes that a and b have the same number of entries.
-     * 
-     * @param a The first vector.
-     * @param b The second vector.
-     * @return The cosine similarity score.
-     */
-    public double calcCosineSimilarity(List<Double> a, List<Double> b) {
-        double numerator = 0.0;
-        double denomA = 0.0;
-        double denomB = 0.0;
-        for (int i = 0; i < a.size(); i++) {
-            double ai = a.get(i);
-            double bi = b.get(i);
-            numerator += ai * bi;
-            denomA += Math.pow(ai, 2);
-            denomB += Math.pow(bi, 2);
-        }
-        return numerator / (Math.sqrt(denomA) * Math.sqrt(denomB));
-    }
-
-    /**
-     * Find the cosine similarity between two given normalized vectors.
-     * 
-     * Assumes that a and b have the same number of entries.
-     * 
-     * @param a The first vector.
-     * @param b The second vector.
-     * @return The cosine similarity score.
-     */
-    public double calcCosineSimilarityNormalized(List<Double> a, List<Double> b) {
-        double sum = 0.0;
-        for (int i = 0; i < a.size(); i++) {
-            double ai = a.get(i);
-            double bi = b.get(i);
-            sum += ai * bi;
-        }
-        return sum;
-    }
-
-    /**
-     * Format foundSites into a List of String[2] with
-     * String[1] = each sites url
-     * String[2] = each sites search score
-     * 
-     * @param foundSites A list of tuples (searchScore, url) to be formated.
-     * @return The formated list of String[2].
-     */
-    private List<String[]> formatSearchOutput(List<Entry<Double, String>> foundSites) {
-        LinkedList<String[]> results = new LinkedList<>();
-        for (Entry<Double, String> entry : foundSites)
-            results.addLast(new String[] { entry.getValue(), entry.getKey().toString() });
-        return results;
-    }
-
-    /**
-     * Get the size of all vectors saved in the index.
-     * 
-     * @return The size of all vectors.
-     */
-    private int getVectorSize() {
-        if (matrix.isEmpty())
-            return 0;
-        return matrix.get(0).size();
+    public List<Double> getVectorOf(String documentId) {
+        return matrix.get(documentIndex.get(documentId));
     }
 
     /**
@@ -483,6 +264,26 @@ public class VectorIndex {
      */
     public boolean containsToken(String token) {
         return tokenIndex.containsKey(token);
+    }
+
+    /**
+     * Get the sum of the TFIDF values in a document of a list of lemmatized
+     * token-(words).
+     * 
+     * @param docId  The identifier of the document.
+     * @param tokens The List of lemmatized tokens.
+     * @return The sum of all tokens TFIDF in the given document.
+     */
+    public double getTfIdfSumOf(String docId, List<String> tokens) {
+        Integer docIndex = documentIndex.get(docId);
+        double tfIdfScore = 0.0;
+        for (String token : tokens) {
+            Integer tokIndex = tokenIndex.get(token);
+            if (tokIndex == null)
+                continue;
+            tfIdfScore += matrix.get(docIndex).get(tokIndex);
+        }
+        return tfIdfScore;
     }
 
     /**
@@ -512,6 +313,37 @@ public class VectorIndex {
      */
     public boolean docHasToken(String token, String docId) {
         return getTfIdfOf(token, docId) != null;
+    }
+
+    /**
+     * Get the special characters filtered out by this index.
+     * 
+     * @return A List of special characters used by this index.
+     */
+    public List<String> getSpecialCharacters() {
+        return this.specialCharacters;
+    }
+
+    /**
+     * Get the stopwords filtered out by this index.
+     * 
+     * @return A List of stopwords used by this index.
+     */
+    public List<String> getStopWords() {
+        return this.stopwords;
+    }
+
+    /**
+     * Get the StanfordCoreNLP pipeline of this index.
+     * 
+     * @return The StanfordCoreNLP pipeline of this index.
+     */
+    public StanfordCoreNLP getNlpPipeline() {
+        return this.pipeline;
+    }
+
+    public Set<String> getTokens() {
+        return tokenIndex.keySet();
     }
 
     /**
