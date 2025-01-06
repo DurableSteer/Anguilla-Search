@@ -50,9 +50,9 @@ public final class AnguillaSearch {
             crawler.crawl();
 
         } catch (Exception e) {
-            LOGGER.error(ANSI_RED + e.getMessage() + ANSI_RESET);
+            LOGGER.error("%s%s%s", ANSI_RED, e.getMessage(), ANSI_RESET);
         }
-        LOGGER.info("Successfully crawled " + crawler.getNrOfSitesCrawled() + " pages.");
+        LOGGER.info("Successfully crawled %d pages.", crawler.getNrOfSitesCrawled());
 
         // Finish building the required indices.
         reverseIndex.finish();
@@ -71,12 +71,12 @@ public final class AnguillaSearch {
         while (!input.equals("exit")) {
             int i = 1;
             List<String[]> queryResults = indexSearcher.searchQueryCosinePageRank(input, pageRankIndex);
-            if (queryResults.size() == 0)
+            if (queryResults.isEmpty())
                 LOGGER.info("No relevant websites were found.");
             for (String[] entry : queryResults) {
-                LOGGER.info("Result " + i);
-                LOGGER.info("URL: " + entry[0]);
-                LOGGER.info("Title: " + forwardIndex.getTitleOf(entry[0]));
+                LOGGER.info("Result %d", i);
+                LOGGER.info("URL: %s", entry[0]);
+                LOGGER.info("Title: %s", forwardIndex.getTitleOf(entry[0]));
                 i++;
             }
             LOGGER.info("Enter search query (or 'exit' to quit):");

@@ -13,7 +13,6 @@ import com.google.gson.JsonObject;
 
 import de.fernunihagen.dbis.anguillasearch.index.IndexSearcher;
 import de.fernunihagen.dbis.anguillasearch.crawler.Crawler;
-import de.fernunihagen.dbis.anguillasearch.helpers.HelperFunctions;
 import de.fernunihagen.dbis.anguillasearch.index.VectorIndex;
 
 /**

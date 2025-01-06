@@ -83,7 +83,7 @@ public class IndexSearcher {
 
         // Get the TFIDF sum for each website in the index.
         for (String docId : index.getStoredDocumentIds()) {
-            Double tfIdfScore = 0.0;
+            Double tfIdfScore;
             tfIdfScore = index.getTfIdfSumOf(docId, tokens);
             if (tfIdfScore == 0.0)
                 continue;
@@ -165,7 +165,7 @@ public class IndexSearcher {
             List<Double> documentVector = index.getVectorOf(docId);
 
             // Find the cosine similarity between the querys and the documents vectors.
-            double cosineSimilarity = 0.0;
+            double cosineSimilarity;
             if (index.isNormalized())
                 cosineSimilarity = calcCosineSimilarityNormalized(queryVector, documentVector);
             else
